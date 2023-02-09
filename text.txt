@@ -1,0 +1,6 @@
+test_cdrh1_iedb_seq.fasta
+test_cdrh2_iedb_seq.fasta
+test_cdrh3_iedb_seq.fasta
+test_cdrl1_iedb_seq.fasta
+test_cdrl2_iedb_seq.fasta
+test_cdrl3_iedb_seq.fasta
