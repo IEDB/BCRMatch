@@ -12,7 +12,7 @@ def parse_arguments():
         usage='%(prog)s [options]'
 	)
 	parser.add_argument("-i", "--inputFile", help="Text file containing list of cdrh/cdrl FASTA file names.", required=True)
-	    
+
 	return parser.parse_args()
 
 
@@ -40,7 +40,6 @@ def main():
 		
 		bcrmatch_functions.create_tcroutput(tcroutput_fname, seq_dict)
 		res = stdoutdata.split('\n')
-
 		print(res)
 
 
