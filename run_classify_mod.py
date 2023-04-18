@@ -1,5 +1,5 @@
 import csv
-import pandas as pd
+import pickle
 from bcrmatch import classify_abs
 
 #user_provided:datset to choose for training, sequences for calculating CDR Kmer
@@ -19,7 +19,7 @@ def compile_scores(file_name):
 			score_dict[pair_id] = score
 	return(score_dict)
 
-def read_input_csv_files(file_name):
+def get_scoring_dict_from_csv(file_name):
 	"""
 	file_name: text file that contains all the input csv file names.
 		* dict_1 = compile_scores("test_cdrh3_iedb_seq_tcroutput.csv")
@@ -70,12 +70,33 @@ def get_training_data(file_name):
 	X_train, y_train = classify_abs.preprocess_ml_dataset(file_name)
 	return X_train, y_train
 
-def get_classifiers(x_train, y_train):
+def train_classifiers(x_train, y_train):
 	# Trains data, then saves the model as pickle file.
 	rf_classifier = classify_abs.RF(x_train, y_train)
 	gnb_classifier = classify_abs.GNB(x_train, y_train)
 
+	with open("rf_classifier.pkl", "wb") as f:
+		pickle.dump(rf_classifier, f)
+	
+	with open("gnb_classifier.pkl", "wb") as f:
+		pickle.dump(gnb_classifier, f)
+
+def get_classifiers(rf_pkl, gnb_pkl):
+	with open("rf_classifier.pkl", "rb") as f:
+		rf_classifier = pickle.load(f)
+	
+	with open("gnb_classifier.pkl", "rb") as f:
+		gnb_classifier = pickle.load(f)
+	
 	return rf_classifier, gnb_classifier
+
+
+# def _get_classifiers(x_train, y_train):
+# 	# Trains data, then saves the model as pickle file.
+# 	rf_classifier = classify_abs.RF(x_train, y_train)
+# 	gnb_classifier = classify_abs.GNB(x_train, y_train)
+	
+# 	return rf_classifier, gnb_classifier
 
 def get_results(complete_score_dict, rf_classifier, gnb_classifier):
 	with open("output.csv", "w", newline='') as csvfile:
@@ -114,8 +135,13 @@ def get_results(complete_score_dict, rf_classifier, gnb_classifier):
 
 
 def main():
-	score_dict = read_input_csv_files("list_csv_files")
+	score_dict = get_scoring_dict_from_csv("list_csv_files")
 	x_train, y_train = get_training_data("test_subset_iedb_ml_dataset_filtered.csv")
+
+	# Saves as pickle file
+	train_classifiers(x_train, y_train)
+
+	# Read from pickle file
 	rf_classifier, gnb_classifier = get_classifiers(x_train, y_train)
 
 	# Writes out to file
