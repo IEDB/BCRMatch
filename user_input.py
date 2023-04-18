@@ -1,54 +1,48 @@
-#!/usr/bin/env python
-import sys, getopt
+import argparse, os
 from bcrmatch import bcrmatch_functions
-import os
 from subprocess import Popen, PIPE
 
-def main(argv):
-   inputfile = ''
-   outputfile = ''
-   try:
-      opts, args = getopt.getopt(argv,"hi:",["ifile="])
-   except getopt.GetoptError:
-      print ('test.py -i <inputfile>')
-      sys.exit(2)
-   for opt, arg in opts:
-      if opt == '-h':
-         print ('test.py -i <inputfile> -o <outputfile>')
-         sys.exit()
-      elif opt in ("-i", "--ifile"):
-         inputfile = arg
-      elif opt in ("-o", "--ofile"):
-         outputfile = arg
-   print ('Input file is ', inputfile)
-   print ('Output file is ', outputfile)
+# Absolute path to the TCRMatch program
+TCRMATCH_PATH = os.getenv('TCRMATCH_PATH')
 
-if __name__ == "__main__":
-	main(sys.argv[1:])
-	IFH1 = open(sys.argv[2], "r")
-	file_list = []
-	for file_id in IFH1.readlines():
-		file_name = file_id.strip("\n")
 
+def parse_arguments():
+	parser = argparse.ArgumentParser(
+        prog='user_input.py',
+        usage='%(prog)s [options]'
+	)
+	parser.add_argument("-i", "--inputFile", help="Text file containing list of cdrh/cdrl FASTA file names.", required=True)
+	    
+	return parser.parse_args()
+
+
+def main():
+	args = parse_arguments()
+	ifh1 = []
+	with open(args.inputFile, "r") as f:
+		ifh1 = [_.strip() for _ in f.readlines()]
+	
+	for file_name in ifh1:
 		seq_dict = bcrmatch_functions.create_tcrmatch_input(file_name)
-		print(seq_dict)
-		tcrinput_file = file_name.split(".fasta")
-		tcrinput = tcrinput_file[0]+"_tcrinput.txt"
-		tcrout = tcrinput_file[0]+"_tcrout"
-		print(tcrinput)
-		OFH = open(tcrout, "w")
+		tcrinput_fname_prefix = file_name.split(".fasta")[0]
+		tcrinput_fname = tcrinput_fname_prefix + "_tcrinput.txt"
+		tcroutput_fname = tcrinput_fname_prefix + "_tcrout"
 
-
-	#cmd = ./tcrmatch -i /home/mjarjapu/non_em/TCRMatch-1.0.2/tcrmatch_sarscov2/scv2_cdrl1_aligned_seq_tcrinput.txt -t 10 -s 0 -d  /home/mjarjapu/non_em/TCRMatch-1.0.2/tcrmatch_sarscov2/scv2_cdrl1_aligned_seq_tcrinput.txt  > /home/mjarjapu/non_em/TCRMatch-1.0.2/test_subprocess
-
-		cmd = ['./tcrmatch', '-i', '/home/mjarjapu/non_em/TCRMatch-1.0.2/%s'% tcrinput, '-t', '10', '-s', '0', '-d','/home/mjarjapu/non_em/TCRMatch-1.0.2/%s'% tcrinput]
-
+		# Run TCRMatch
+		cmd = ['./tcrmatch', '-i', '%s/%s' %(TCRMATCH_PATH, tcrinput_fname), '-t', '10', '-s', '0', '-d','%s/%s' %(TCRMATCH_PATH, tcrinput_fname)]
 		process = Popen(cmd,stdout=PIPE)
 		stdoutdata, stderrdata_ignored = process.communicate()
 		stdoutdata = stdoutdata.decode()
-		OFH.write(stdoutdata)
-		OFH.close()
-		bcrmatch_functions.create_tcroutput(tcrout, seq_dict)
+
+		# Write to output file
+		with open(tcroutput_fname, "w") as f:
+			f.write(stdoutdata)
+		
+		bcrmatch_functions.create_tcroutput(tcroutput_fname, seq_dict)
 		res = stdoutdata.split('\n')
 
 		print(res)
+
+
+if __name__ == "__main__":
+    main()	
