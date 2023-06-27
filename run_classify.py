@@ -61,16 +61,19 @@ for pair in dict_1.keys():
 
 #print(all_score_dict)
 
-X_train, y_train = classify_abs.preprocess_ml_dataset("test_subset_iedb_ml_dataset_filtered.csv")
+X_train, y_train = classify_abs.preprocess_ml_dataset("abpairs_abligity.csv")
 #print(X_train)
 #print(y_train)
 
 rf_classifier = classify_abs.RF(X_train, y_train)
 gnb_classifier = classify_abs.GNB(X_train, y_train)
-
-with open("output.csv", "w", newline='') as csvfile:
+log_reg_classifer = classify_abs.LR(X_train, y_train)
+xgb_classifier = classify_abs.XGB(X_train, y_train)
+ffnn_classfier = classify_abs.FFNN(X_train, y_train)
+#ffnn_classfier.save('ffnn_abligity.h5')
+with open("output3.csv", "w", newline='') as csvfile:
 	outfile_writer = csv.writer(csvfile, delimiter=',')
-	outfile_writer.writerow(["Antibody pair","RF Prediction", "GNB Prediction"])
+	outfile_writer.writerow(["Antibody pair","RF Prediction","LR Prediction","GNB Prediction", "XGB Prediction", "FFNN Prediction"])
 	for ab_pair in all_score_dict.keys():
 		rowline = []
 		rowline.append(ab_pair)
@@ -78,12 +81,22 @@ with open("output.csv", "w", newline='') as csvfile:
 		input_data = classify_abs.preprocess_input_data(all_score_dict[ab_pair])
 		#print(input_data)
 
-		output_rf = rf_classifier.predict(input_data)
-		output_gnb = gnb_classifier.predict(input_data)
+		output_rf = rf_classifier.predict_proba(input_data)[:,1]
+		output_lr = log_reg_classifer.predict_proba(input_data)[:,1]
+		output_gnb = gnb_classifier.predict_proba(input_data)[:,1]
+		output_xgb = xgb_classifier.predict_proba(input_data)[:,1]
+		output_ffnn = ffnn_classfier.predict(input_data)
 
+		rowline.append(output_rf)
+		rowline.append(output_lr)
+		rowline.append(output_gnb)
+		rowline.append(output_xgb)
+		rowline.append(output_ffnn)
+
+		outfile_writer.writerow(rowline)
 		#print(output_rf)
 		#print(output_gnb)
-
+		"""
 		if output_rf == 0:
 			if output_gnb == 0:
 				#print("Doesn't bind to same epitope as given antibody\n")
@@ -101,3 +114,4 @@ with open("output.csv", "w", newline='') as csvfile:
 			rowline.append(output_gnb)
 			rowline.append("1")
 		outfile_writer.writerow(rowline)
+		"""
