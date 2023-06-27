@@ -11,7 +11,7 @@ Instructions:
 
 sh bcrmatch_pipeline.sh
 
-5. This generates intermediate files and a final output file, 'output.csv', with each row corresponding to an antibody pair. Column 1 is the antibody pair, Column 2 is the prediction made by the Random Forest model, Column 3 is the prediction made by the GNB model. Column 4 states whether the antibody pair binds to the same epitope (1) or does not bind to the same epitope (0)
+5. This generates intermediate files and a final output file, 'output.csv', with each row corresponding to an antibody pair. Column 1 is the antibody pair, and the subsequent columns contain the probability predicted by each ML model that the antibody pair targets a common epitope
 
 ## Getting started
 
