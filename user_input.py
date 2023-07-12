@@ -1,4 +1,5 @@
-import argparse, os
+import argparse
+import os
 from bcrmatch import bcrmatch_functions
 from subprocess import Popen, PIPE
 
