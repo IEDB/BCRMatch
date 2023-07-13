@@ -1,31 +1,59 @@
 # BCRMatch
 
-Instructions:
+### Prerequisites
+> **_NOTE:_** <br>
+> TCRMatch is required to run BCRMatch. Currently, it's using TCRMatch standalone (https://gitlab.lji.org/iedb/tools/standalone-tools/TCRMatch).
 
-1. Download the fasta files and text.txt files into a directory. The fasta files contain sequences of each of the 6 CDR loops of the antibodies.
-2. Download the .csv file which is used as a sample training dataset for the ML models.
-3. Line 44 in 'user_input.py' has to be modified to include 2 paths: Path 1 to directory containing TCRMatch source code. Path 2 to directory containing 6 fasta files and the text.txt file
+Once TCRMatch is downloaded from the repository, navigate inside the standalone and run the `Makefile`:
+```
+make
+```
+
+Set the path to TCRMatch in the environment variable `TCRMATCH_PATH`.
+```
+export TCRMATCH_PATH=<PATH_TO_TCRMATCH_PATH>
+```
+
+Finally, make sure all the requirements are installed.
+```
+pip install -r requirements.txt
+```
+
+### Docker
+It is possible to run this inside a Docker container.
+1. Make sure TCRMatch is in the current working directory.
+2. Build image form `Dockerfile`:
+    ```
+    docker build -t bcrmatch_img .
+    ```
+3. Run the container with a volume mounted to the current directory:
+   ```
+   docker run -d -v $(pwd):/src/bcrmatch --name bcrmatch_container bcrmatch_img
+   ```
+4. Navigate inside the container:
+   ```
+   docker exec -it bcrmatch_img /bin/bash
+   ```
 
 
-4. Run the script as follows:
+### Running BCRMatch
+Here is an example of how to run BCRMatch:
+```
+python run_bcrmatch.py -i ./examples/text.txt
+```
 
-sh bcrmatch_pipeline.sh
+#### What's in text.txt?
+BCRMatch requires sequences of each of the 6 CDR loops of the antibodies.<br>Typically, all the sequence files will be in `FASTA` format.
+<br><br>
+As of now, in order to minimize input parameters, all of the sequence file names are added to the `text.txt` file.
+```
+cdrh1_seqs.fasta
+cdrh2_seqs.fasta
+cdrh3_seqs.fasta
+cdrl1_seqs.fasta
+cdrl2_seqs.fasta
+cdrl3_seqs.fasta
+```
 
-5. This generates intermediate files and a final output file, 'output.csv', with each row corresponding to an antibody pair. Column 1 is the antibody pair, Column 2 is the prediction made by the Random Forest model, Column 3 is the prediction made by the GNB model. Column 4 states whether the antibody pair binds to the same epitope (1) or does not bind to the same epitope (0)
-
-## Getting started
-
-
-
-
-
-
-
-
-
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+#### What gets outputted?
+It currently outputs 2 pickled classifiers (`gnb_classifier.pkl`, `rf_classifier.pkl`) and a final output file in CSV.
