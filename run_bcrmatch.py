@@ -179,7 +179,7 @@ def main():
     
     print("Retrieve scores as dictionary...")
     score_dict = get_scoring_dict_from_csv(tcrout_files)
-    x_train, y_train = get_training_data("test_subset_iedb_ml_dataset_filtered.csv")
+    x_train, y_train = get_training_data("./datasets/test_subset_iedb_ml_dataset_filtered.csv")
 
     print("Pickling classifiers...")
 	# Saves classifers into pickle files
