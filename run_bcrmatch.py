@@ -1,6 +1,7 @@
 import argparse
 import os
 import csv
+import pickle
 import tempfile
 from pathlib import Path
 from bcrmatch import bcrmatch_functions, classify_abs
@@ -21,6 +22,66 @@ def parse_arguments():
     return parser.parse_args()
 
 
+def get_results(complete_score_dict, rf_classifier, gnb_classifier):
+	with open("output_hk.csv", "w", newline='') as csvfile:
+		outfile_writer = csv.writer(csvfile, delimiter=',')
+		outfile_writer.writerow(["Antibody pair","RF Prediction", "GNB Prediction"])
+		for ab_pair in complete_score_dict.keys():
+			rowline = []
+			rowline.append(ab_pair)
+			#input_data = classify_abs.preprocess_input_data([0.98,1,1,1,1,0.98])
+			input_data = classify_abs.preprocess_input_data(complete_score_dict[ab_pair])
+			#print(input_data)
+
+			output_rf = rf_classifier.predict(input_data)
+			output_gnb = gnb_classifier.predict(input_data)
+
+			#print(output_rf)
+			#print(output_gnb)
+
+			if output_rf == 0:
+				if output_gnb == 0:
+					#print("Doesn't bind to same epitope as given antibody\n")
+					rowline.append(output_rf)
+					rowline.append(output_gnb)
+					rowline.append("0")
+				elif output_gnb == 1:
+					#print("Binds to same epitope as given antibody\n")
+					rowline.append(output_rf)
+					rowline.append(output_gnb)
+					rowline.append("1")
+			elif output_rf == 1:
+				#print("Binds to same epitope as given antibody\n")
+				rowline.append(output_rf)
+				rowline.append(output_gnb)
+				rowline.append("1")
+			outfile_writer.writerow(rowline)
+
+def train_classifiers(x_train, y_train):
+	# Trains data, then saves the model as pickle file.
+	rf_classifier = classify_abs.RF(x_train, y_train)
+	gnb_classifier = classify_abs.GNB(x_train, y_train)
+
+	with open("rf_classifier.pkl", "wb") as f:
+		pickle.dump(rf_classifier, f)
+	
+	with open("gnb_classifier.pkl", "wb") as f:
+		pickle.dump(gnb_classifier, f)
+
+def get_classifiers(rf_pkl, gnb_pkl):
+	with open("rf_classifier.pkl", "rb") as f:
+		rf_classifier = pickle.load(f)
+	
+	with open("gnb_classifier.pkl", "rb") as f:
+		gnb_classifier = pickle.load(f)
+	
+	return rf_classifier, gnb_classifier
+
+def get_training_data(file_name):
+	# X_train, y_train = classify_abs.preprocess_ml_dataset("test_subset_iedb_ml_dataset_filtered.csv")
+	X_train, y_train = classify_abs.preprocess_ml_dataset(file_name)
+	return X_train, y_train
+
 def compile_scores(file_name):
 	score_dict = {}
 	IFH1 = open(file_name, "r")
@@ -36,77 +97,44 @@ def compile_scores(file_name):
                         
 	return(score_dict)
 
+def get_scoring_dict_from_csv(file_names):
+	"""
+	file_name: text file that contains all the input csv file names.
+		* dict_1 = compile_scores("test_cdrh3_iedb_seq_tcroutput.csv")
+		* dict_2 = compile_scores("test_cdrh2_iedb_seq_tcroutput.csv")
+		* dict_3 = compile_scores("test_cdrh1_iedb_seq_tcroutput.csv")
+		* dict_4 = compile_scores("test_cdrl3_iedb_seq_tcroutput.csv")
+		* dict_5 = compile_scores("test_cdrl2_iedb_seq_tcroutput.csv")
+		* dict_6 = compile_scores("test_cdrl1_iedb_seq_tcroutput.csv")
+	"""
+	all_score_dict = {}
+	
+	dict_1 = compile_scores(file_names[0])
+	dict_2 = compile_scores(file_names[1])
+	dict_3 = compile_scores(file_names[2])
+	dict_4 = compile_scores(file_names[3])
+	dict_5 = compile_scores(file_names[4])
+	dict_6 = compile_scores(file_names[5])
 
-def run_classify(tcrout_files) :
-    all_score_dict = {}
-    dict_1 = compile_scores(tcrout_files[0])
-    dict_2 = compile_scores(tcrout_files[1])
-    dict_3 = compile_scores(tcrout_files[2])
-    dict_4 = compile_scores(tcrout_files[3])
-    dict_5 = compile_scores(tcrout_files[4])
-    dict_6 = compile_scores(tcrout_files[5])
+	for pair in dict_1.keys():
+		if pair not in all_score_dict.keys():
+			all_score_dict[pair] = []
+			all_score_dict[pair].append(dict_1[pair])
+			all_score_dict[pair].append(dict_2[pair])
+			all_score_dict[pair].append(dict_3[pair])
+			all_score_dict[pair].append(dict_4[pair])
+			all_score_dict[pair].append(dict_5[pair])
+			all_score_dict[pair].append(dict_6[pair])
+		else:
+			all_score_dict[pair].append(dict_1[pair])
+			all_score_dict[pair].append(dict_2[pair])
+			all_score_dict[pair].append(dict_3[pair])
+			all_score_dict[pair].append(dict_4[pair])
+			all_score_dict[pair].append(dict_5[pair])
+			all_score_dict[pair].append(dict_6[pair])
 
-
-    for pair in dict_1.keys():
-        if pair not in all_score_dict.keys():
-            all_score_dict[pair] = []
-            all_score_dict[pair].append(dict_1[pair])
-            all_score_dict[pair].append(dict_2[pair])
-            all_score_dict[pair].append(dict_3[pair])
-            all_score_dict[pair].append(dict_4[pair])
-            all_score_dict[pair].append(dict_5[pair])
-            all_score_dict[pair].append(dict_6[pair])
-        elif pair in all_score_dict.keys():
-            all_score_dict[pair].append(dict_1[pair])
-            all_score_dict[pair].append(dict_2[pair])
-            all_score_dict[pair].append(dict_3[pair])
-            all_score_dict[pair].append(dict_4[pair])
-            all_score_dict[pair].append(dict_5[pair])
-            all_score_dict[pair].append(dict_6[pair])
-
-    #print(all_score_dict)
-
-    X_train, y_train = classify_abs.preprocess_ml_dataset("test_subset_iedb_ml_dataset_filtered.csv")
-    #print(X_train)
-    #print(y_train)
-
-    rf_classifier = classify_abs.RF(X_train, y_train)
-    gnb_classifier = classify_abs.GNB(X_train, y_train)
-
-    with open("output_hk.csv", "w", newline='') as csvfile:
-        outfile_writer = csv.writer(csvfile, delimiter=',')
-        outfile_writer.writerow(["Antibody pair","RF Prediction", "GNB Prediction"])
-        for ab_pair in all_score_dict.keys():
-            rowline = []
-            rowline.append(ab_pair)
-            #input_data = classify_abs.preprocess_input_data([0.98,1,1,1,1,0.98])
-            input_data = classify_abs.preprocess_input_data(all_score_dict[ab_pair])
-            #print(input_data)
-
-            output_rf = rf_classifier.predict(input_data)
-            output_gnb = gnb_classifier.predict(input_data)
-
-            #print(output_rf)
-            #print(output_gnb)
-
-            if output_rf == 0:
-                if output_gnb == 0:
-                    #print("Doesn't bind to same epitope as given antibody\n")
-                    rowline.append(output_rf)
-                    rowline.append(output_gnb)
-                    rowline.append("0")
-                elif output_gnb == 1:
-                    #print("Binds to same epitope as given antibody\n")
-                    rowline.append(output_rf)
-                    rowline.append(output_gnb)
-                    rowline.append("1")
-            elif output_rf == 1:
-                #print("Binds to same epitope as given antibody\n")
-                rowline.append(output_rf)
-                rowline.append(output_gnb)
-                rowline.append("1")
-            outfile_writer.writerow(rowline)
-
+	#print(all_score_dict)
+	return all_score_dict
 
 
 def get_tcr_output_files(ifh1, input_files_path) :
@@ -122,7 +150,7 @@ def get_tcr_output_files(ifh1, input_files_path) :
             tmp.write('\n'.join(list(seq_dict.values())))
 
         # Run TCRMatch
-        cmd = ['/src/bcrmatch/TCRMatch-0.1.1/tcrmatch', '-i', '%s' %(tmp.name), '-t', '10', '-s', '0', '-d','%s' %(tmp.name)]
+        cmd = ['%s/TCRMatch-0.1.1/tcrmatch' %(TCRMATCH_PATH), '-i', '%s' %(tmp.name), '-t', '10', '-s', '0', '-d','%s' %(tmp.name)]
         process = Popen(cmd,stdout=PIPE)
         stdoutdata, stderrdata_ignored = process.communicate()
         stdoutdata = stdoutdata.decode().strip()
@@ -149,9 +177,21 @@ def main():
     print("Retrieving all files containing the TCRMatch result...")
     tcrout_files = get_tcr_output_files(bcr_input_filenames, pdir)
     
-    print("Classifying...")
-    # Get the final output in CSV file
-    run_classify(tcrout_files)
+    print("Retrieve scores as dictionary...")
+    score_dict = get_scoring_dict_from_csv(tcrout_files)
+    x_train, y_train = get_training_data("test_subset_iedb_ml_dataset_filtered.csv")
+
+    print("Pickling classifiers...")
+	# Saves classifers into pickle files
+    train_classifiers(x_train, y_train)
+
+	# Read from pickle file
+    rf_classifier, gnb_classifier = get_classifiers(x_train, y_train)
+
+    print("Writing the final output to CSV...")
+	# Writes out to file
+    get_results(score_dict, rf_classifier, gnb_classifier)
+
     print("Completed!")
 
 if __name__ == "__main__":

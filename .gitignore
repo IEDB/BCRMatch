@@ -1,2 +1,5 @@
 .python-version
 **__pycache__
+**.pkl
+**.csv
+TCRMatch-0.1.1/
