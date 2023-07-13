@@ -52,12 +52,12 @@ for pair in dict_1.keys():
 		all_score_dict[pair].append(dict_5[pair])
 		all_score_dict[pair].append(dict_6[pair])
 	elif pair in all_score_dict.keys():
-		all_score_dict[pair].append(dict1[pair])
-		all_score_dict[pair].append(dict2[pair])
-		all_score_dict[pair].append(dict3[pair])
-		all_score_dict[pair].append(dict4[pair])
-		all_score_dict[pair].append(dict5[pair])
-		all_score_dict[pair].append(dict6[pair])
+		all_score_dict[pair].append(dict_1[pair])
+		all_score_dict[pair].append(dict_2[pair])
+		all_score_dict[pair].append(dict_3[pair])
+		all_score_dict[pair].append(dict_4[pair])
+		all_score_dict[pair].append(dict_5[pair])
+		all_score_dict[pair].append(dict_6[pair])
 
 #print(all_score_dict)
 
