@@ -1,5 +1,5 @@
 .python-version
 **__pycache__
 **.pkl
-**.csv
+output**
 TCRMatch-0.1.1/
