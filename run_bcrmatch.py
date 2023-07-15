@@ -22,10 +22,10 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def get_results(complete_score_dict, rf_classifier, gnb_classifier):
+def get_results(complete_score_dict, rf_classifier, gnb_classifier, log_reg_classifier, xgb_classifier, ffnn_classifier):
 	with open("output_hk.csv", "w", newline='') as csvfile:
 		outfile_writer = csv.writer(csvfile, delimiter=',')
-		outfile_writer.writerow(["Antibody pair","RF Prediction", "GNB Prediction"])
+		outfile_writer.writerow(["Antibody pair","RF Prediction","LR Prediction","GNB Prediction", "XGB Prediction", "FFNN Prediction"])
 		for ab_pair in complete_score_dict.keys():
 			rowline = []
 			rowline.append(ab_pair)
@@ -33,40 +33,67 @@ def get_results(complete_score_dict, rf_classifier, gnb_classifier):
 			input_data = classify_abs.preprocess_input_data(complete_score_dict[ab_pair])
 			#print(input_data)
 
-			output_rf = rf_classifier.predict(input_data)
-			output_gnb = gnb_classifier.predict(input_data)
+			# output_rf = rf_classifier.predict(input_data)
+			# output_gnb = gnb_classifier.predict(input_data)
+
+			output_rf = rf_classifier.predict_proba(input_data)[:,1]
+			output_lr = log_reg_classifier.predict_proba(input_data)[:,1]
+			output_gnb = gnb_classifier.predict_proba(input_data)[:,1]
+			output_xgb = xgb_classifier.predict_proba(input_data)[:,1]
+			output_ffnn = ffnn_classifier.predict(input_data)
+
+			rowline.append(output_rf)
+			rowline.append(output_lr)
+			rowline.append(output_gnb)
+			rowline.append(output_xgb)
+			rowline.append(output_ffnn)
 
 			#print(output_rf)
 			#print(output_gnb)
 
-			if output_rf == 0:
-				if output_gnb == 0:
-					#print("Doesn't bind to same epitope as given antibody\n")
-					rowline.append(output_rf)
-					rowline.append(output_gnb)
-					rowline.append("0")
-				elif output_gnb == 1:
-					#print("Binds to same epitope as given antibody\n")
-					rowline.append(output_rf)
-					rowline.append(output_gnb)
-					rowline.append("1")
-			elif output_rf == 1:
-				#print("Binds to same epitope as given antibody\n")
-				rowline.append(output_rf)
-				rowline.append(output_gnb)
-				rowline.append("1")
+			# if output_rf == 0:
+			# 	if output_gnb == 0:
+			# 		#print("Doesn't bind to same epitope as given antibody\n")
+			# 		rowline.append(output_rf)
+			# 		rowline.append(output_gnb)
+			# 		rowline.append("0")
+			# 	elif output_gnb == 1:
+			# 		#print("Binds to same epitope as given antibody\n")
+			# 		rowline.append(output_rf)
+			# 		rowline.append(output_gnb)
+			# 		rowline.append("1")
+			# elif output_rf == 1:
+			# 	#print("Binds to same epitope as given antibody\n")
+			# 	rowline.append(output_rf)
+			# 	rowline.append(output_gnb)
+			# 	rowline.append("1")
+
 			outfile_writer.writerow(rowline)
 
 def train_classifiers(x_train, y_train):
 	# Trains data, then saves the model as pickle file.
 	rf_classifier = classify_abs.RF(x_train, y_train)
 	gnb_classifier = classify_abs.GNB(x_train, y_train)
+	log_reg_classifer = classify_abs.LR(x_train, y_train)
+	xgb_classifier = classify_abs.XGB(x_train, y_train)
+	ffnn_classifier = classify_abs.FFNN(x_train, y_train)
+	#ffnn_classfier.save('ffnn_abligity.h5')
 
 	with open("rf_classifier.pkl", "wb") as f:
 		pickle.dump(rf_classifier, f)
 	
 	with open("gnb_classifier.pkl", "wb") as f:
 		pickle.dump(gnb_classifier, f)
+
+	with open("log_reg_classifer", "wb") as f:
+		pickle.dump(log_reg_classifer, f)
+	
+	with open("xgb_classifier", "wb") as f:
+		pickle.dump(xgb_classifier, f)
+
+	with open("ffnn_classifier", "wb") as f:
+		pickle.dump(ffnn_classifier, f)
+
 
 def get_classifiers(rf_pkl, gnb_pkl):
 	with open("rf_classifier.pkl", "rb") as f:
@@ -75,7 +102,16 @@ def get_classifiers(rf_pkl, gnb_pkl):
 	with open("gnb_classifier.pkl", "rb") as f:
 		gnb_classifier = pickle.load(f)
 	
-	return rf_classifier, gnb_classifier
+	with open("xgb_classifier.pkl", "rb") as f:
+		xgb_classifier = pickle.load(f)
+	
+	with open("log_reg_classifier.pkl", "rb") as f:
+		log_reg_classifier = pickle.load(f)
+	
+	with open("ffnn_classifier.pkl", "rb") as f:
+		ffnn_classifier = pickle.load(f)
+	
+	return rf_classifier, gnb_classifier, xgb_classifier, log_reg_classifier, ffnn_classifier
 
 def get_training_data(file_name):
 	# X_train, y_train = classify_abs.preprocess_ml_dataset("test_subset_iedb_ml_dataset_filtered.csv")
@@ -168,7 +204,9 @@ def get_tcr_output_files(ifh1, input_files_path) :
 
 
 def main():
+    print("Starting program...")
     args = parse_arguments()
+    print("Done parsing arguments...")
     bcr_input_filenames = []
     pdir = str(Path(args.inputFile).parent.absolute())
     with open(args.inputFile, "r") as f :
@@ -180,17 +218,18 @@ def main():
     print("Retrieve scores as dictionary...")
     score_dict = get_scoring_dict_from_csv(tcrout_files)
     x_train, y_train = get_training_data("./datasets/test_subset_iedb_ml_dataset_filtered.csv")
+    # x_train, y_train = get_training_data("abpairs_abligity.csv")
 
     print("Pickling classifiers...")
 	# Saves classifers into pickle files
     train_classifiers(x_train, y_train)
 
 	# Read from pickle file
-    rf_classifier, gnb_classifier = get_classifiers(x_train, y_train)
+    rf_classifier, gnb_classifier, xgb_classifier, log_reg_classifier, ffnn_classifier = get_classifiers(x_train, y_train)
 
     print("Writing the final output to CSV...")
 	# Writes out to file
-    get_results(score_dict, rf_classifier, gnb_classifier)
+    get_results(score_dict, rf_classifier, gnb_classifier, log_reg_classifier, xgb_classifier, ffnn_classifier)
 
     print("Completed!")
 

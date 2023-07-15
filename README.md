@@ -32,7 +32,7 @@ It is possible to run this inside a Docker container.
    ```
 4. Navigate inside the container:
    ```
-   docker exec -it bcrmatch_img /bin/bash
+   docker exec -it bcrmatch_container /bin/bash
    ```
 
 
