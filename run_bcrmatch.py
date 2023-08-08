@@ -74,7 +74,7 @@ def train_classifiers(x_train, y_train):
 	# Trains data, then saves the model as pickle file.
 	rf_classifier = classify_abs.RF(x_train, y_train)
 	gnb_classifier = classify_abs.GNB(x_train, y_train)
-	log_reg_classifer = classify_abs.LR(x_train, y_train)
+	log_reg_classifier = classify_abs.LR(x_train, y_train)
 	xgb_classifier = classify_abs.XGB(x_train, y_train)
 	ffnn_classifier = classify_abs.FFNN(x_train, y_train)
 	#ffnn_classfier.save('ffnn_abligity.h5')
@@ -85,13 +85,13 @@ def train_classifiers(x_train, y_train):
 	with open("gnb_classifier.pkl", "wb") as f:
 		pickle.dump(gnb_classifier, f)
 
-	with open("log_reg_classifer", "wb") as f:
-		pickle.dump(log_reg_classifer, f)
+	with open("log_reg_classifier.pkl", "wb") as f:
+		pickle.dump(log_reg_classifier, f)
 	
-	with open("xgb_classifier", "wb") as f:
+	with open("xgb_classifier.pkl", "wb") as f:
 		pickle.dump(xgb_classifier, f)
 
-	with open("ffnn_classifier", "wb") as f:
+	with open("ffnn_classifier.pkl", "wb") as f:
 		pickle.dump(ffnn_classifier, f)
 
 
@@ -179,7 +179,7 @@ def get_tcr_output_files(ifh1, input_files_path) :
         # Get full path to individual example input FASTA file
         input_file_name = input_files_path + '/' + input_file_name
                 
-        seq_dict = bcrmatch_functions.create_tcrmatch_input_hk(input_file_name)
+        seq_dict = bcrmatch_functions.create_tcrmatch_input(input_file_name)
         
         # Create temporary file containing 'seq_dict' to be used as input for TCRMatch
         with tempfile.NamedTemporaryFile(mode = 'w', prefix='tcr_', suffix='_input', delete=False) as tmp :
@@ -192,7 +192,7 @@ def get_tcr_output_files(ifh1, input_files_path) :
         stdoutdata = stdoutdata.decode().strip()
         
         # Format the results into a file
-        tcr_output_result = bcrmatch_functions.create_tcroutput_hk(stdoutdata, seq_dict)
+        tcr_output_result = bcrmatch_functions.create_tcroutput(stdoutdata, seq_dict)
 
         with tempfile.NamedTemporaryFile(mode = 'w', prefix='tcr_', suffix='_output', delete=False) as tmp :
             tmp.write(tcr_output_result)
@@ -217,8 +217,8 @@ def main():
     
     print("Retrieve scores as dictionary...")
     score_dict = get_scoring_dict_from_csv(tcrout_files)
-    x_train, y_train = get_training_data("./datasets/test_subset_iedb_ml_dataset_filtered.csv")
-    # x_train, y_train = get_training_data("abpairs_abligity.csv")
+    # x_train, y_train = get_training_data("./datasets/test_subset_iedb_ml_dataset_filtered.csv")
+    x_train, y_train = get_training_data("./datasets/abpairs_abligity.csv")
 
     print("Pickling classifiers...")
 	# Saves classifers into pickle files
