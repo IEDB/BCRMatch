@@ -42,11 +42,11 @@ def get_results(complete_score_dict, rf_classifier, gnb_classifier, log_reg_clas
 			output_xgb = xgb_classifier.predict_proba(input_data)[:,1]
 			output_ffnn = ffnn_classifier.predict(input_data)
 
-			rowline.append(output_rf)
-			rowline.append(output_lr)
-			rowline.append(output_gnb)
-			rowline.append(output_xgb)
-			rowline.append(output_ffnn)
+			rowline.append(output_rf[0])
+			rowline.append(output_lr[0])
+			rowline.append(output_gnb[0])
+			rowline.append(output_xgb[0])
+			rowline.append(output_ffnn[0][0])
 
 			#print(output_rf)
 			#print(output_gnb)
@@ -79,36 +79,36 @@ def train_classifiers(x_train, y_train):
 	ffnn_classifier = classify_abs.FFNN(x_train, y_train)
 	#ffnn_classfier.save('ffnn_abligity.h5')
 
-	with open("rf_classifier.pkl", "wb") as f:
+	with open("pickles/rf_classifier.pkl", "wb") as f:
 		pickle.dump(rf_classifier, f)
 	
-	with open("gnb_classifier.pkl", "wb") as f:
+	with open("pickles/gnb_classifier.pkl", "wb") as f:
 		pickle.dump(gnb_classifier, f)
 
-	with open("log_reg_classifier.pkl", "wb") as f:
+	with open("pickles/log_reg_classifier.pkl", "wb") as f:
 		pickle.dump(log_reg_classifier, f)
 	
-	with open("xgb_classifier.pkl", "wb") as f:
+	with open("pickles/xgb_classifier.pkl", "wb") as f:
 		pickle.dump(xgb_classifier, f)
 
-	with open("ffnn_classifier.pkl", "wb") as f:
+	with open("pickles/ffnn_classifier.pkl", "wb") as f:
 		pickle.dump(ffnn_classifier, f)
 
 
 def get_classifiers(rf_pkl, gnb_pkl):
-	with open("rf_classifier.pkl", "rb") as f:
+	with open("pickles/rf_classifier.pkl", "rb") as f:
 		rf_classifier = pickle.load(f)
 	
-	with open("gnb_classifier.pkl", "rb") as f:
+	with open("pickles/gnb_classifier.pkl", "rb") as f:
 		gnb_classifier = pickle.load(f)
 	
-	with open("xgb_classifier.pkl", "rb") as f:
+	with open("pickles/xgb_classifier.pkl", "rb") as f:
 		xgb_classifier = pickle.load(f)
 	
-	with open("log_reg_classifier.pkl", "rb") as f:
+	with open("pickles/log_reg_classifier.pkl", "rb") as f:
 		log_reg_classifier = pickle.load(f)
 	
-	with open("ffnn_classifier.pkl", "rb") as f:
+	with open("pickles/ffnn_classifier.pkl", "rb") as f:
 		ffnn_classifier = pickle.load(f)
 	
 	return rf_classifier, gnb_classifier, xgb_classifier, log_reg_classifier, ffnn_classifier

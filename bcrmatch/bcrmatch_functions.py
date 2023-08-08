@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+def get_key(seq_id_dict, seq_value):
+	keys = [k for k,value in seq_id_dict.items() if value == seq_value]
+	return keys
+
+
 def create_tcrmatch_input(filename):
 	IFH1 = open(filename, 'r')
 	
