@@ -23,7 +23,7 @@ def parse_arguments():
 
 
 def get_results(complete_score_dict, rf_classifier, gnb_classifier, log_reg_classifier, xgb_classifier, ffnn_classifier):
-	with open("output_hk.csv", "w", newline='') as csvfile:
+	with open("output.csv", "w", newline='') as csvfile:
 		outfile_writer = csv.writer(csvfile, delimiter=',')
 		outfile_writer.writerow(["Antibody pair","RF Prediction","LR Prediction","GNB Prediction", "XGB Prediction", "FFNN Prediction"])
 		for ab_pair in complete_score_dict.keys():
@@ -169,7 +169,6 @@ def get_scoring_dict_from_csv(file_names):
 			all_score_dict[pair].append(dict_5[pair])
 			all_score_dict[pair].append(dict_6[pair])
 
-	#print(all_score_dict)
 	return all_score_dict
 
 
@@ -186,7 +185,8 @@ def get_tcr_output_files(ifh1, input_files_path) :
             tmp.write('\n'.join(list(seq_dict.values())))
 
         # Run TCRMatch
-        cmd = ['%s/TCRMatch-0.1.1/tcrmatch' %(TCRMATCH_PATH), '-i', '%s' %(tmp.name), '-t', '10', '-s', '0', '-d','%s' %(tmp.name)]
+        cmd = ['%s/tcrmatch' %(TCRMATCH_PATH), '-i', '%s' %(tmp.name), '-t', '10', '-s', '0', '-d','%s' %(tmp.name)]
+
         process = Popen(cmd,stdout=PIPE)
         stdoutdata, stderrdata_ignored = process.communicate()
         stdoutdata = stdoutdata.decode().strip()
