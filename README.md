@@ -1,36 +1,19 @@
 # BCRMatch
 
-### Prerequisites
 > **_NOTE:_** <br>
-> TCRMatch is required to run BCRMatch. Currently, it's using TCRMatch standalone (https://gitlab.lji.org/iedb/tools/standalone-tools/TCRMatch).
-
-Once TCRMatch is downloaded from the repository, navigate inside the standalone and run the `Makefile`:
-```
-make
-```
-
-Set the path to TCRMatch in the environment variable `TCRMATCH_PATH`.
-```
-export TCRMATCH_PATH=<PATH_TO_TCRMATCH_PATH>
-```
-
-Finally, make sure all the requirements are installed.
-```
-pip install -r requirements.txt
-```
+> TCRMatch is required to run BCRMatch. Currently, Docker is using [Harbor TCRMatch](https://harbor.lji.org/harbor/projects/5/repositories/iedb-public%2Ftcrmatch/tags/0.1.1) as the base image.
 
 ### Docker
 It is possible to run this inside a Docker container.
-1. Make sure TCRMatch is in the current working directory.
-2. Build image form `Dockerfile`:
+1. Build image form `Dockerfile`:
     ```
     docker build -t bcrmatch_img .
     ```
-3. Run the container with a volume mounted to the current directory:
+2. Run the container with a volume mounted to the current directory:
    ```
    docker run -d -v $(pwd):/src/bcrmatch --name bcrmatch_container bcrmatch_img
    ```
-4. Navigate inside the container:
+3. Navigate inside the container:
    ```
    docker exec -it bcrmatch_container /bin/bash
    ```
