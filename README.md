@@ -25,7 +25,7 @@ Here is an example of how to run BCRMatch:
 python run_bcrmatch.py -i ./examples/text.txt
 ```
 
-#### What's in text.txt?
+#### What is the Input?
 BCRMatch requires sequences of each of the 6 CDR loops of the antibodies.<br>Typically, all the sequence files will be in `FASTA` format.
 <br><br>
 As of now, in order to minimize input parameters, all of the sequence file names are added to the `text.txt` file.
