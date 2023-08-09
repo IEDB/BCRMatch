@@ -14,7 +14,8 @@ RUN apt update && \
     apt-get update && \
     apt-get install -y python3-pip && \
     apt-get install -y build-essential vim && \
-    pip install --upgrade setuptools pip
+    pip install --upgrade setuptools pip && \
+    echo 'alias python="python3"' >> ~/.bashrc
 
 RUN apt-get install ca-certificates -y && \
     wget https://cacerts.digicert.com/GeoTrustRSACA2018.crt.pem -O /usr/local/share/ca-certificates/GeoTrustRSACA2018.crt && \
