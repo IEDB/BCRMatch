@@ -14,7 +14,7 @@ TCRMATCH_PATH = os.getenv('TCRMATCH_PATH', '/src/bcrmatch')
 
 def parse_arguments():
     parser = argparse.ArgumentParser(
-        prog='user_input.py',
+        prog='run_bcrmatch.py',
         usage='%(prog)s [options]'
     )
     parser.add_argument("-i", "--inputFile", help="Text file containing list of cdrh/cdrl FASTA file names.", required=True)
