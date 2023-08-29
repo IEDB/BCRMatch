@@ -1,18 +1,20 @@
 import csv
 import pickle
 from bcrmatch import classify_abs
+from bcrmatch_argparser import BCRMatchArgumentParser
+
 
 #user_provided:datset to choose for training, sequences for calculating CDR Kmer
 #create another python object to calculate cdr kmer
 
-def parse_arguments():
-    parser = argparse.ArgumentParser(
-        prog='run_classify.py',
-        usage='%(prog)s [options]'
-    )
-    parser.add_argument("-i", "--inputFile", help="Text file containing list of cdrh/cdrl FASTA file names.", required=True)
+# def parse_arguments():
+#     parser = argparse.ArgumentParser(
+#         prog='run_classify.py',
+#         usage='%(prog)s [options]'
+#     )
+#     parser.add_argument("-i", "--inputFile", help="Text file containing list of cdrh/cdrl FASTA file names.", required=True)
 
-    return parser.parse_args()
+#     return parser.parse_args()
 
 def compile_scores(file_name):
 	score_dict = {}

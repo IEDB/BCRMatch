@@ -1,45 +1,50 @@
 import argparse
 import os
+import sys
 import csv
 import pickle
 import tempfile
 from pathlib import Path
+from bcrmatch_argparser import BCRMatchArgumentParser
 from bcrmatch import bcrmatch_functions, classify_abs
 from subprocess import Popen, PIPE
-
 
 # Absolute path to the TCRMatch program
 TCRMATCH_PATH = os.getenv('TCRMATCH_PATH', '/src/bcrmatch')
 
 
 def parse_arguments():
-    parser = argparse.ArgumentParser(
-        prog='run_bcrmatch.py',
-        usage='%(prog)s [options]'
-    )
-    parser.add_argument("-i", "--inputFile", help="Text file containing list of cdrh/cdrl FASTA file names.", required=True)
+	parser = argparse.ArgumentParser(
+		prog='run_bcrmatch.py',
+		usage='%(prog)s [options]'
+	)
+	parser.add_argument(
+		"-i", "--inputFile", help="Text file containing list of cdrh/cdrl FASTA file names.", required=True)
 
-    return parser.parse_args()
+	return parser.parse_args()
 
 
-def get_results(complete_score_dict, rf_classifier, gnb_classifier, log_reg_classifier, xgb_classifier, ffnn_classifier):
+def get_results(complete_score_dict, rf_classifier, gnb_classifier,
+                log_reg_classifier, xgb_classifier, ffnn_classifier):
 	with open("output.csv", "w", newline='') as csvfile:
 		outfile_writer = csv.writer(csvfile, delimiter=',')
-		outfile_writer.writerow(["Antibody pair","RF Prediction","LR Prediction","GNB Prediction", "XGB Prediction", "FFNN Prediction"])
+		outfile_writer.writerow(["Antibody pair", "RF Prediction", "LR Prediction",
+		                        "GNB Prediction", "XGB Prediction", "FFNN Prediction"])
 		for ab_pair in complete_score_dict.keys():
 			rowline = []
 			rowline.append(ab_pair)
-			#input_data = classify_abs.preprocess_input_data([0.98,1,1,1,1,0.98])
-			input_data = classify_abs.preprocess_input_data(complete_score_dict[ab_pair])
-			#print(input_data)
+			# input_data = classify_abs.preprocess_input_data([0.98,1,1,1,1,0.98])
+			input_data = classify_abs.preprocess_input_data(
+			    complete_score_dict[ab_pair])
+			# print(input_data)
 
 			# output_rf = rf_classifier.predict(input_data)
 			# output_gnb = gnb_classifier.predict(input_data)
 
-			output_rf = rf_classifier.predict_proba(input_data)[:,1]
-			output_lr = log_reg_classifier.predict_proba(input_data)[:,1]
-			output_gnb = gnb_classifier.predict_proba(input_data)[:,1]
-			output_xgb = xgb_classifier.predict_proba(input_data)[:,1]
+			output_rf = rf_classifier.predict_proba(input_data)[:, 1]
+			output_lr = log_reg_classifier.predict_proba(input_data)[:, 1]
+			output_gnb = gnb_classifier.predict_proba(input_data)[:, 1]
+			output_xgb = xgb_classifier.predict_proba(input_data)[:, 1]
 			output_ffnn = ffnn_classifier.predict(input_data)
 
 			rowline.append(output_rf[0])
@@ -48,8 +53,8 @@ def get_results(complete_score_dict, rf_classifier, gnb_classifier, log_reg_clas
 			rowline.append(output_xgb[0])
 			rowline.append(output_ffnn[0][0])
 
-			#print(output_rf)
-			#print(output_gnb)
+			# print(output_rf)
+			# print(output_gnb)
 
 			# if output_rf == 0:
 			# 	if output_gnb == 0:
@@ -70,6 +75,7 @@ def get_results(complete_score_dict, rf_classifier, gnb_classifier, log_reg_clas
 
 			outfile_writer.writerow(rowline)
 
+
 def train_classifiers(x_train, y_train):
 	# Trains data, then saves the model as pickle file.
 	rf_classifier = classify_abs.RF(x_train, y_train)
@@ -77,17 +83,17 @@ def train_classifiers(x_train, y_train):
 	log_reg_classifier = classify_abs.LR(x_train, y_train)
 	xgb_classifier = classify_abs.XGB(x_train, y_train)
 	ffnn_classifier = classify_abs.FFNN(x_train, y_train)
-	#ffnn_classfier.save('ffnn_abligity.h5')
+	# ffnn_classfier.save('ffnn_abligity.h5')
 
 	with open("pickles/rf_classifier.pkl", "wb") as f:
 		pickle.dump(rf_classifier, f)
-	
+
 	with open("pickles/gnb_classifier.pkl", "wb") as f:
 		pickle.dump(gnb_classifier, f)
 
 	with open("pickles/log_reg_classifier.pkl", "wb") as f:
 		pickle.dump(log_reg_classifier, f)
-	
+
 	with open("pickles/xgb_classifier.pkl", "wb") as f:
 		pickle.dump(xgb_classifier, f)
 
@@ -98,31 +104,34 @@ def train_classifiers(x_train, y_train):
 def get_classifiers(rf_pkl, gnb_pkl):
 	with open("pickles/rf_classifier.pkl", "rb") as f:
 		rf_classifier = pickle.load(f)
-	
+
 	with open("pickles/gnb_classifier.pkl", "rb") as f:
 		gnb_classifier = pickle.load(f)
-	
+
 	with open("pickles/xgb_classifier.pkl", "rb") as f:
 		xgb_classifier = pickle.load(f)
-	
+
 	with open("pickles/log_reg_classifier.pkl", "rb") as f:
 		log_reg_classifier = pickle.load(f)
-	
+
 	with open("pickles/ffnn_classifier.pkl", "rb") as f:
 		ffnn_classifier = pickle.load(f)
-	
+
 	return rf_classifier, gnb_classifier, xgb_classifier, log_reg_classifier, ffnn_classifier
 
+
 def get_training_data(file_name):
-	# X_train, y_train = classify_abs.preprocess_ml_dataset("test_subset_iedb_ml_dataset_filtered.csv")
+	# X_train, y_train =
+	# classify_abs.preprocess_ml_dataset("test_subset_iedb_ml_dataset_filtered.csv")
 	X_train, y_train = classify_abs.preprocess_ml_dataset(file_name)
 	return X_train, y_train
+
 
 def compile_scores(file_name):
 	score_dict = {}
 	IFH1 = open(file_name, "r")
 	lines1 = IFH1.readlines()
-        
+
 	for line1 in lines1:
 		line1 = line1.strip("\n")
 		line1 = line1.split(",")
@@ -130,8 +139,9 @@ def compile_scores(file_name):
 		score = line1[1]
 		if pair_id not in score_dict:
 			score_dict[pair_id] = score
-                        
-	return(score_dict)
+
+	return (score_dict)
+
 
 def get_scoring_dict_from_csv(file_names):
 	"""
@@ -144,7 +154,7 @@ def get_scoring_dict_from_csv(file_names):
 		* dict_6 = compile_scores("test_cdrl1_iedb_seq_tcroutput.csv")
 	"""
 	all_score_dict = {}
-	
+
 	dict_1 = compile_scores(file_names[0])
 	dict_2 = compile_scores(file_names[1])
 	dict_3 = compile_scores(file_names[2])
@@ -172,65 +182,134 @@ def get_scoring_dict_from_csv(file_names):
 	return all_score_dict
 
 
-def get_tcr_output_files(ifh1, input_files_path) :
-    tcrout_filenames = []
-    for input_file_name in ifh1 :
-        # Get full path to individual example input FASTA file
-        input_file_name = input_files_path + '/' + input_file_name
-                
-        seq_dict = bcrmatch_functions.create_tcrmatch_input(input_file_name)
-        
-        # Create temporary file containing 'seq_dict' to be used as input for TCRMatch
-        with tempfile.NamedTemporaryFile(mode = 'w', prefix='tcr_', suffix='_input', delete=False) as tmp :
-            tmp.write('\n'.join(list(seq_dict.values())))
+def get_tcr_output_files(ifh1, input_files_path):
+	tcrout_filenames = []
+	for input_file_name in ifh1:
+		# Get full path to individual example input FASTA file
+		input_file_name = input_files_path + '/' + input_file_name
 
-        # Run TCRMatch
-        cmd = ['%s/tcrmatch' %(TCRMATCH_PATH), '-i', '%s' %(tmp.name), '-t', '10', '-s', '0', '-d','%s' %(tmp.name)]
+		seq_dict = bcrmatch_functions.create_tcrmatch_input(input_file_name)
 
-        process = Popen(cmd,stdout=PIPE)
-        stdoutdata, stderrdata_ignored = process.communicate()
-        stdoutdata = stdoutdata.decode().strip()
-        
-        # Format the results into a file
-        tcr_output_result = bcrmatch_functions.create_tcroutput(stdoutdata, seq_dict)
 
-        with tempfile.NamedTemporaryFile(mode = 'w', prefix='tcr_', suffix='_output', delete=False) as tmp :
-            tmp.write(tcr_output_result)
-            tcrout_filenames.append(tmp.name)
+		# Create temporary file containing 'seq_dict' to be used as input for
+		# TCRMatch
+		with tempfile.NamedTemporaryFile(mode='w', prefix='tcr_', suffix='_input', delete=False) as tmp:
+			tmp.write('\n'.join(list(seq_dict.values())))
 
-        # TODO: Clean up the input temporary files
+		# Run TCRMatch
+		cmd = ['%s/tcrmatch' % (TCRMATCH_PATH), '-i', '%s' %
+								(tmp.name), '-t', '10', '-s', '0', '-d', '%s' % (tmp.name)]
 
-    return tcrout_filenames
+		process = Popen(cmd, stdout=PIPE)
+		stdoutdata, stderrdata_ignored = process.communicate()
+		stdoutdata = stdoutdata.decode().strip()
+
+		# Format the results into a file
+		tcr_output_result = bcrmatch_functions.create_tcroutput(
+			stdoutdata, seq_dict)
+
+		with tempfile.NamedTemporaryFile(mode='w', prefix='tcr_', suffix='_output', delete=False) as tmp:
+			tmp.write(tcr_output_result)
+			tcrout_filenames.append(tmp.name)
+			
+
+		# TODO: Clean up the input temporary files
+
+	return tcrout_filenames
+
+
+def get_tcr_output_files_hk(tsv_content) :
+	# [['Seq_Name', 'CDRL1', 'CDRL2', 'CDRL3', 'CDRH1', 'CDRH2', 'CDRH3'], ['1', 'NNIGSKS', 'DDS', 'WDSSSDHA', 'GFTFDDY', 'SWNTGT', 'RSYVVAAEYYFH'], ['2', 'SQDISNY', 'YTS', 'DFTLPF', 'GYTFTNY', 'YPGNGD', 'GGSYRYDGGFD'], ['3', 'ASGNIHN', 'YYT', 'HFWSTPR', 'GFSLTGY', 'WGDGN', 'RDYRLD'], ['4', 'SESVDNYGISF', 'AAS', 'SKEVPL', 'GYTFTSS', 'HPNSGN', 'RYGSPYYFD'], ['5', 'ASQDISN', 'YFT', 'QYSTVPW', 'GYDFTHY', 'NTYTGE', 'PYYYGTSHWYFD']]
+	# for entry in tsv_content :
+
+	# Seq_Name
+	# [1, 2, 3, 4, 5]
+	# CDRL1
+	# ['NNIGSKS', 'SQDISNY', 'ASGNIHN', 'SESVDNYGISF', 'ASQDISN']
+	# CDRL2
+	# ['DDS', 'YTS', 'YYT', 'AAS', 'YFT']
+	# CDRL3
+	# ['WDSSSDHA', 'DFTLPF', 'HFWSTPR', 'SKEVPL', 'QYSTVPW']
+	# CDRH1
+	# ['GFTFDDY', 'GYTFTNY', 'GFSLTGY', 'GYTFTSS', 'GYDFTHY']
+	# CDRH2
+	# ['SWNTGT', 'YPGNGD', 'WGDGN', 'HPNSGN', 'NTYTGE']
+	# CDRH3
+	# ['RSYVVAAEYYFH', 'GGSYRYDGGFD', 'RDYRLD', 'RYGSPYYFD', 'PYYYGTSHWYFD']
+	tcrout_filenames = []
+	sequence_name_key = list(tsv_content.keys())[0]
+	sequence_names = tsv_content[sequence_name_key]
+
+	for k, v in tsv_content.items():
+		# Skip sequence names
+		if k == sequence_name_key :
+			continue
+
+		seq_dict = {}
+		for i in range(len(sequence_names)):
+			seq_dict[str(sequence_names[i])] = v[i]
+		
+		print(seq_dict)
+
+		# Create temporary file containing 'seq_dict' to be used as input for TCRMatch
+		with tempfile.NamedTemporaryFile(mode='w', prefix='tcr_', suffix='_input', delete=False) as tmp:
+			tmp.write('\n'.join(list(seq_dict.values())))
+
+		# Run TCRMatch
+		cmd = ['%s/tcrmatch' % (TCRMATCH_PATH), '-i', '%s' %
+								(tmp.name), '-t', '10', '-s', '0', '-d', '%s' % (tmp.name)]
+
+		process = Popen(cmd, stdout=PIPE)
+		stdoutdata, stderrdata_ignored = process.communicate()
+		stdoutdata = stdoutdata.decode().strip()
+		print(">>>>>>>>>>>>>>>>>>>>>>>>")
+		print(stdoutdata)
+
+		# Format the results into a file
+		tcr_output_result = bcrmatch_functions.create_tcroutput(stdoutdata, seq_dict)
+
+		with tempfile.NamedTemporaryFile(mode='w', prefix='tcr_', suffix='_output', delete=False) as tmp:
+			tmp.write(tcr_output_result)
+			tcrout_filenames.append(tmp.name)
+			
+
+		# TODO: Clean up the input temporary files
+
+	return tcrout_filenames
+
+
+
 
 
 def main():
-    print("Starting program...")
-    args = parse_arguments()
-    print("Done parsing arguments...")
-    bcr_input_filenames = []
-    pdir = str(Path(args.inputFile).parent.absolute())
-    with open(args.inputFile, "r") as f :
-        bcr_input_filenames = [_.strip() for _ in f.readlines()]
+	print("Starting program...")
+	bcrmatch_parser = BCRMatchArgumentParser()
+	args, parser = bcrmatch_parser.parse_args(sys.argv[1:])
 
-    print("Retrieving all files containing the TCRMatch result...")
-    tcrout_files = get_tcr_output_files(bcr_input_filenames, pdir)
-    
-    print("Retrieve scores as dictionary...")
-    score_dict = get_scoring_dict_from_csv(tcrout_files)
-    x_train, y_train = get_training_data("./datasets/abpairs_iedb.csv")
+	bcr_input_filenames = []
 
-    print("Pickling classifiers...")
+	# Retrieve content of TSV file.
+	tsv_content = bcrmatch_parser.get_input_tsv_content(args, parser)
+
+	print("Retrieving all files containing the TCRMatch result...")
+	tcrout_files = get_tcr_output_files_hk(tsv_content)
+
+	print("Retrieve scores as dictionary...")
+	score_dict = get_scoring_dict_from_csv(tcrout_files)
+	x_train, y_train = get_training_data("./datasets/abpairs_iedb.csv")
+
+	print("Pickling classifiers...")
 	# Saves classifers into pickle files
-    train_classifiers(x_train, y_train)
+	train_classifiers(x_train, y_train)
 
 	# Read from pickle file
-    rf_classifier, gnb_classifier, xgb_classifier, log_reg_classifier, ffnn_classifier = get_classifiers(x_train, y_train)
+	rf_classifier, gnb_classifier, xgb_classifier, log_reg_classifier, ffnn_classifier = get_classifiers(x_train, y_train)
 
-    print("Writing the final output to CSV...")
+	print("Writing the final output to CSV...")
 	# Writes out to file
-    get_results(score_dict, rf_classifier, gnb_classifier, log_reg_classifier, xgb_classifier, ffnn_classifier)
+	get_results(score_dict, rf_classifier, gnb_classifier, log_reg_classifier, xgb_classifier, ffnn_classifier)
 
-    print("Completed!")
+	print("Completed!")
 
 if __name__ == "__main__":
     main()	
