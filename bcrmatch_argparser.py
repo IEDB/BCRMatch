@@ -31,12 +31,12 @@ class BCRMatchArgumentParser:
                             '''
                             ))
         self.parser.add_argument('--input-cdrh', '-ch', dest = 'cdrh_fasta', required = False,
-                            nargs = '?', 
+                            nargs = '*', 
                             type = argparse.FileType('r'),
                             default = argparse.SUPPRESS,
                             help = 'FASTA file containing 3 CDRHs.')
         self.parser.add_argument('--input-cdrl', '-cl', dest = 'cdrl_fasta', required = False,
-                            nargs = '?', 
+                            nargs = '*', 
                             type = argparse.FileType('r'),
                             default = argparse.SUPPRESS,
                             help = 'FASTA file containing 3 CDRLs.')
@@ -79,9 +79,71 @@ class BCRMatchArgumentParser:
             file_name = getattr(args, 'input_tsv').name
         
         return pd.read_table(file_name).to_dict('list')
-
-
+    
     def get_sequences(self, args, parser) :
+        ''' DESCRIPTION:
+
+        '''
+        # {
+        #     'Seq_Name': [1, 2, 3, 4, 5], 
+        #     'CDRL1': ['NNIGSKS', 'SQDISNY', 'ASGNIHN', 'SESVDNYGISF', 'ASQDISN'], 
+        #     'CDRL2': ['DDS', 'YTS', 'YYT', 'AAS', 'YFT'], 
+        #     'CDRL3': ['WDSSSDHA', 'DFTLPF', 'HFWSTPR', 'SKEVPL', 'QYSTVPW'], 
+        #     'CDRH1': ['GFTFDDY', 'GYTFTNY', 'GFSLTGY', 'GYTFTSS', 'GYDFTHY'], 
+        #     'CDRH2': ['SWNTGT', 'YPGNGD', 'WGDGN', 'HPNSGN', 'NTYTGE'], 
+        #     'CDRH3': ['RSYVVAAEYYFH', 'GGSYRYDGGFD', 'RDYRLD', 'RYGSPYYFD', 'PYYYGTSHWYFD']
+        # }
+        _NUM_FASTA_FILES = 3
+
+        if 'input_tsv' in args:
+            return
+        
+
+
+
+        # Check if cdrh/cdrl flags are specified.
+        if 'cdrh_fasta' not in args :
+            raise parser.error('Please provide FASTA files containing CDRH sequences.')
+        
+        if 'cdrl_fasta' not in args :
+            raise parser.error('Please provide FASTA files containing CDRL sequences.')
+        
+        # Check if 3 fasta files are provided for each cdrh and cdrl flags.
+        if len(getattr(args, 'cdrh_fasta')) != _NUM_FASTA_FILES :
+            raise parser.error('Please provide 3 CDRH fasta files.')
+
+        if len(getattr(args, 'cdrl_fasta')) != _NUM_FASTA_FILES :
+            raise parser.error('Please provide 3 CDRL fasta files.')
+
+        if 'cdrh_fasta' in args and 'cdrl_fasta' in args :
+            # NOTE: Is it safe to assume that the user will provide exact number of sequences for all?
+            cdrh_files = getattr(args, 'cdrh_fasta')
+            cdrl_files = getattr(args, 'cdrl_fasta')
+            seq_dict = {}
+
+            for i in range(_NUM_FASTA_FILES):
+                cdrh_file = cdrh_files[i].name
+                cdrl_file = cdrl_files[i].name
+                print(cdrh_file)
+                print(cdrl_file)
+
+                with open(cdrh_file, 'r') as f:
+                    cdrh_fcontent = f.readlines()
+                
+                with open(cdrl_file, 'r') as f:
+                    cdrl_fcontent = f.readlines()
+
+                print("cdrh content......")
+                print(cdrh_fcontent)
+
+                print('cdrl_fcontent......')
+                print(cdrl_fcontent)
+                exit()
+
+        
+
+
+    def get_sequences_old(self, args, parser) :
         ''' DESCRIPTION:
             The sequences in file will take precedence over inline sequence.
         '''

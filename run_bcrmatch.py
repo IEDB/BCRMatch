@@ -287,9 +287,17 @@ def main():
 	args, parser = bcrmatch_parser.parse_args(sys.argv[1:])
 
 	bcr_input_filenames = []
+	tsv_content = ''
+	
 
 	# Retrieve content of TSV file.
-	tsv_content = bcrmatch_parser.get_input_tsv_content(args, parser)
+	if 'input_tsv' in args:
+		tsv_content = bcrmatch_parser.get_input_tsv_content(args, parser)
+
+	print("***********")
+	print(tsv_content)
+	bcrmatch_parser.get_sequences(args, parser)
+	exit()
 
 	print("Retrieving all files containing the TCRMatch result...")
 	tcrout_files = get_tcr_output_files_hk(tsv_content)
