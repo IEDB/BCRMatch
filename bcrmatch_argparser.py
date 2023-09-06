@@ -66,40 +66,36 @@ class BCRMatchArgumentParser:
         return self.parser.parse_args(), self.parser
     
 
-    def get_input_tsv_content(self, args, parser) :
+    def get_input_tsv_content(self, args) :
         ''' DESCRIPTION:
             This will open the TSV file and return its content.
 
             Return Value: List of lists
             It returns list containing each row in a list format.   
         '''
-        file_name = ''
-
-        if 'input_tsv' in args :
-            file_name = getattr(args, 'input_tsv').name
+        file_name = getattr(args, 'input_tsv').name
         
         return pd.read_table(file_name).to_dict('list')
     
     def get_sequences(self, args, parser) :
         ''' DESCRIPTION:
-
+            Reads either TSV file or list of 6 FASTA files (3 CDRLs, 3 CDRHs), and turns
+            them into a dictionary in the following format:
+            {
+                'Seq_Name': [1, 2, 3, 4, 5], 
+                'CDRL1': ['NNIGSKS', 'SQDISNY', 'ASGNIHN', 'SESVDNYGISF', 'ASQDISN'], 
+                'CDRL2': ['DDS', 'YTS', 'YYT', 'AAS', 'YFT'], 
+                'CDRL3': ['WDSSSDHA', 'DFTLPF', 'HFWSTPR', 'SKEVPL', 'QYSTVPW'], 
+                'CDRH1': ['GFTFDDY', 'GYTFTNY', 'GFSLTGY', 'GYTFTSS', 'GYDFTHY'], 
+                'CDRH2': ['SWNTGT', 'YPGNGD', 'WGDGN', 'HPNSGN', 'NTYTGE'], 
+                'CDRH3': ['RSYVVAAEYYFH', 'GGSYRYDGGFD', 'RDYRLD', 'RYGSPYYFD', 'PYYYGTSHWYFD']
+            }
         '''
-        # {
-        #     'Seq_Name': [1, 2, 3, 4, 5], 
-        #     'CDRL1': ['NNIGSKS', 'SQDISNY', 'ASGNIHN', 'SESVDNYGISF', 'ASQDISN'], 
-        #     'CDRL2': ['DDS', 'YTS', 'YYT', 'AAS', 'YFT'], 
-        #     'CDRL3': ['WDSSSDHA', 'DFTLPF', 'HFWSTPR', 'SKEVPL', 'QYSTVPW'], 
-        #     'CDRH1': ['GFTFDDY', 'GYTFTNY', 'GFSLTGY', 'GYTFTSS', 'GYDFTHY'], 
-        #     'CDRH2': ['SWNTGT', 'YPGNGD', 'WGDGN', 'HPNSGN', 'NTYTGE'], 
-        #     'CDRH3': ['RSYVVAAEYYFH', 'GGSYRYDGGFD', 'RDYRLD', 'RYGSPYYFD', 'PYYYGTSHWYFD']
-        # }
         _NUM_FASTA_FILES = 3
 
         if 'input_tsv' in args:
-            return
+            return self.get_input_tsv_content(args)
         
-
-
 
         # Check if cdrh/cdrl flags are specified.
         if 'cdrh_fasta' not in args :
@@ -119,28 +115,45 @@ class BCRMatchArgumentParser:
             # NOTE: Is it safe to assume that the user will provide exact number of sequences for all?
             cdrh_files = getattr(args, 'cdrh_fasta')
             cdrl_files = getattr(args, 'cdrl_fasta')
-            seq_dict = {}
+            sequence_names = []
+            sequence_series = []
 
             for i in range(_NUM_FASTA_FILES):
+                _INDEX = i + 1
                 cdrh_file = cdrh_files[i].name
                 cdrl_file = cdrl_files[i].name
-                print(cdrh_file)
-                print(cdrl_file)
 
                 with open(cdrh_file, 'r') as f:
-                    cdrh_fcontent = f.readlines()
+                    cdrh_fcontent = [_.strip().replace('>','') for _ in f.readlines()]
                 
                 with open(cdrl_file, 'r') as f:
-                    cdrl_fcontent = f.readlines()
+                    cdrl_fcontent = [_.strip().replace('>','') for _ in f.readlines()]
 
-                print("cdrh content......")
-                print(cdrh_fcontent)
+                # Retrieve sequence names (only have to perform once)
+                if not sequence_names:
+                    for i in range(len(cdrl_fcontent)):
+                        if i%2 == 0 :
+                            sequence_names.append(cdrl_fcontent[i])
+                
+                    sequence_series.append( pd.DataFrame({'Seq_Name': sequence_names}) )
 
-                print('cdrl_fcontent......')
-                print(cdrl_fcontent)
-                exit()
+                # Collect sequences into Series
+                cdrl_col = []
+                cdrh_col = []
+                for i in range(len(cdrl_fcontent)):
+                    if i%2:
+                        cdrl_col.append(cdrl_fcontent[i])
+                        cdrh_col.append(cdrh_fcontent[i])
+                
+                sequence_series.append( pd.DataFrame({'CDRL%s' %(_INDEX): cdrl_col}) )
+                sequence_series.append( pd.DataFrame({'CDRH%s' %(_INDEX): cdrh_col}) )
 
-        
+
+            seq_df = pd.concat(sequence_series, axis=1)
+
+            return seq_df.to_dict('list')
+
+        return {} 
 
 
     def get_sequences_old(self, args, parser) :

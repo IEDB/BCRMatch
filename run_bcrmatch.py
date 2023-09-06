@@ -286,21 +286,13 @@ def main():
 	bcrmatch_parser = BCRMatchArgumentParser()
 	args, parser = bcrmatch_parser.parse_args(sys.argv[1:])
 
-	bcr_input_filenames = []
-	tsv_content = ''
-	
-
-	# Retrieve content of TSV file.
-	if 'input_tsv' in args:
-		tsv_content = bcrmatch_parser.get_input_tsv_content(args, parser)
-
-	print("***********")
-	print(tsv_content)
-	bcrmatch_parser.get_sequences(args, parser)
-	exit()
+	# Get all the sequences into a dictionary
+	# TODO: Figure out if result will still be the same if user provides
+	# TSV file with CDRL1 CDRH1 CDRL2 CDRH2 CDRL3 CDRH3 order.
+	sequence_info_dict = bcrmatch_parser.get_sequences(args, parser)
 
 	print("Retrieving all files containing the TCRMatch result...")
-	tcrout_files = get_tcr_output_files_hk(tsv_content)
+	tcrout_files = get_tcr_output_files_hk(sequence_info_dict)
 
 	print("Retrieve scores as dictionary...")
 	score_dict = get_scoring_dict_from_csv(tcrout_files)

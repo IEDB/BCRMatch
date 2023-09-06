@@ -24,6 +24,9 @@ Here is an example of how to run BCRMatch:
 ```
 python run_bcrmatch.py -i ./examples/text.txt
 ```
+```
+python run_bcrmatch.py -ch examples/cdrh1_seqs.fasta examples/cdrh2_seqs.fasta examples/cdrh3_seqs.fasta -cl examples/cdrl1_seqs.fasta examples/cdrl2_seqs.fasta examples/cdrl3_seqs.fasta
+```
 
 #### What is the Input?
 BCRMatch requires sequences of each of the 6 CDR loops of the antibodies.<br>Typically, all the sequence files will be in `FASTA` format.
