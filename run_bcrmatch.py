@@ -1,27 +1,14 @@
-import argparse
 import os
 import sys
 import csv
 import pickle
 import tempfile
-from pathlib import Path
 from bcrmatch_argparser import BCRMatchArgumentParser
 from bcrmatch import bcrmatch_functions, classify_abs
 from subprocess import Popen, PIPE
 
 # Absolute path to the TCRMatch program
 TCRMATCH_PATH = os.getenv('TCRMATCH_PATH', '/src/bcrmatch')
-
-
-def parse_arguments():
-	parser = argparse.ArgumentParser(
-		prog='run_bcrmatch.py',
-		usage='%(prog)s [options]'
-	)
-	parser.add_argument(
-		"-i", "--inputFile", help="Text file containing list of cdrh/cdrl FASTA file names.", required=True)
-
-	return parser.parse_args()
 
 
 def get_results(complete_score_dict, rf_classifier, gnb_classifier,
@@ -287,8 +274,6 @@ def main():
 	args, parser = bcrmatch_parser.parse_args(sys.argv[1:])
 
 	# Get all the sequences into a dictionary
-	# TODO: Figure out if result will still be the same if user provides
-	# TSV file with CDRL1 CDRH1 CDRL2 CDRH2 CDRL3 CDRH3 order.
 	sequence_info_dict = bcrmatch_parser.get_sequences(args, parser)
 
 	print("Retrieving all files containing the TCRMatch result...")
