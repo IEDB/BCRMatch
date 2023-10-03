@@ -22,7 +22,7 @@ It is possible to run this inside a Docker container.
 ### Running BCRMatch
 Here is an example of how to run BCRMatch:
 ```
-python run_bcrmatch.py -i ./examples/text.txt
+python run_bcrmatch.py -i ./examples/example.tsv
 ```
 ```
 python run_bcrmatch.py -ch examples/cdrh1_seqs.fasta examples/cdrh2_seqs.fasta examples/cdrh3_seqs.fasta -cl examples/cdrl1_seqs.fasta examples/cdrl2_seqs.fasta examples/cdrl3_seqs.fasta
