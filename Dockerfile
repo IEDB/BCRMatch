@@ -26,8 +26,10 @@ RUN mkdir -p /src/bcrmatch
 
 WORKDIR /src/bcrmatch
 
-COPY . ./
+COPY requirements.txt .
 
 RUN pip install -r requirements.txt
 
-CMD ["tail", "-f", "/dev/null"]
+COPY . .
+
+CMD ["sh", "-c", "python3 run_bcrmatch.py ${BCRMATCH_ARGS}"]

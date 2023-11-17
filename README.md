@@ -7,15 +7,11 @@
 It is possible to run this inside a Docker container.
 1. Build image form `Dockerfile`:
     ```
-    docker build -t bcrmatch_img .
+    docker build -t bcrmatch .
     ```
 2. Run the container with a volume mounted to the current directory:
    ```
-   docker run -d -v $(pwd):/src/bcrmatch --name bcrmatch_container bcrmatch_img
-   ```
-3. Navigate inside the container:
-   ```
-   docker exec -it bcrmatch_container /bin/bash
+   docker run -it -v $(pwd):/src/bcrmatch bcrmatch /bin/bash
    ```
 
 
@@ -26,6 +22,17 @@ python run_bcrmatch.py -i ./examples/example.tsv
 ```
 ```
 python run_bcrmatch.py -ch examples/cdrh1_seqs.fasta examples/cdrh2_seqs.fasta examples/cdrh3_seqs.fasta -cl examples/cdrl1_seqs.fasta examples/cdrl2_seqs.fasta examples/cdrl3_seqs.fasta
+```
+
+#### Running inside the container
+
+All of the command line arguments can be stored in the ```BCRMATCH_ARGS``` environment variable.
+This makes passing parameters that include special characters more consistent across platforms. For
+example:
+
+```
+docker run -it -e BCRMATCH_ARGS="-ch examples/cdrh1_seqs.fasta examples/cdrh2_seqs.fasta examples/cdrh3_seqs.fasta -cl examples/cdrl1_seqs.fasta examples/cdrl2_seqs.fasta examples/cdrl3_seqs.fasta" \
+bcrmatch
 ```
 
 #### What is the Input?
