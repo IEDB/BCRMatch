@@ -15,6 +15,9 @@ class BCRMatchArgumentParser:
 
     def parse_args(self, args):
         # Optional Arguments (Flags)
+        # we need a parameter to define whether we should run training or prediction
+        # prediction should be the default
+        # self.parser.add_argument('--training-mode', '-t')
         self.parser.add_argument('--input-tsv', '-i', dest = 'input_tsv', required = False,
                             nargs = '?', 
                             type = argparse.FileType('r'),
