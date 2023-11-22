@@ -23,12 +23,10 @@ def get_results(complete_score_dict, rf_classifier, gnb_classifier,
 		for ab_pair in complete_score_dict.keys():
 			rowline = []
 			rowline.append(ab_pair)
-			print('!!!!!!!')
-			print(ab_pair)
+
 			# input_data = classify_abs.preprocess_input_data([0.98,1,1,1,1,0.98])
 			input_data = classify_abs.preprocess_input_data(
 			    complete_score_dict[ab_pair])
-			# print(input_data)
 
 			# output_rf = rf_classifier.predict(input_data)
 			# output_gnb = gnb_classifier.predict(input_data)
@@ -357,6 +355,10 @@ def main():
 
 	bcrmatch_parser.set_training_mode(args)
 
+	# Basic validation and prep on all the params(flags)
+	bcrmatch_parser.validate(args)
+	
+
 	# Check training mode
 	if bcrmatch_parser.get_training_mode():
 		print('Training mode on..')
@@ -373,6 +375,9 @@ def main():
 	# Get all the sequences into a dictionary
 	sequence_info_dict = bcrmatch_parser.get_sequences(args, parser)
 	print(sequence_info_dict)
+
+	training_dataset_file = bcrmatch_parser.get_training_dataset()
+	x_train, y_train = get_training_data(training_dataset_file)
 
 	print("Retrieving all files containing the TCRMatch result...")
 	tcrout_files = get_tcr_output_files_hk(sequence_info_dict)

@@ -225,6 +225,16 @@ class BCRMatchArgumentParser:
         force_flag = getattr(args, 'retrain_dataset')
         self._force_retrain_flag = force_flag
 
+    def validate(self, args):
+        print(args)
+
+        # Set the values
+        self.set_training_mode(args)
+        self.set_training_dataset(args)
+        self.set_training_dataset_version(args)
+        self.set_force_retrain_flag(args)
+
+
     
     def prepare_training_mode(self, args):
         # Basic validation on training mode flags
