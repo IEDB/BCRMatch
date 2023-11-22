@@ -1,7 +1,9 @@
 import sys
+import os
 import argparse
 import textwrap
 import pandas as pd
+from pathlib import Path
 
 
 class BCRMatchArgumentParser:
@@ -17,7 +19,6 @@ class BCRMatchArgumentParser:
         # Optional Arguments (Flags)
         # we need a parameter to define whether we should run training or prediction
         # prediction should be the default
-        # self.parser.add_argument('--training-mode', '-t')
         self.parser.add_argument('--input-tsv', '-i', dest = 'input_tsv', required = False,
                             nargs = '?', 
                             type = argparse.FileType('r'),
@@ -48,11 +49,33 @@ class BCRMatchArgumentParser:
                             type = str,
                             default = argparse.SUPPRESS,
                             help = 'Path to the database/json created or modified in the training.')
-        self.parser.add_argument('--training-dataset-name', '-t', dest = 'dataset_name', required = False,
-                            nargs = '+', 
+        self.parser.add_argument('--training-dataset-csv', '-tc',
+                            dest = 'training_dataset_csv',
+                            required = False,
+                            help = 'Path to the CSV file that will be used for training.')
+        self.parser.add_argument('--training-dataset-name', '-tn', 
+                            dest = 'training_dataset_name', 
+                            required = False, 
                             type = str,
                             default = argparse.SUPPRESS,
-                            help = 'Nmae of the training dataset to use for the prediction.')
+                            help = 'Name of the training dataset to use for the prediction.')
+        self.parser.add_argument('--training_dataset-version', '-tv',
+                            dest = 'training_dataset_version',
+                            required = False,
+                            type = str,
+                            default = 'v1',
+                            help = 'A version number of the dataset.')
+        self.parser.add_argument('--training-mode', '-tm',
+                            dest = 'training_mode',
+                            required = False,
+                            action='store_true',
+                            help = 'Train the classifiers on the provided dataset.')
+        self.parser.add_argument('--force', '-f',
+                            dest = 'retrain_dataset',
+                            required = False,
+                            action='store_true',
+                            help = 'Train the classifiers on the provided dataset.')
+        
         self.parser.add_argument('--output', '-o', dest = 'output', required = False,
                             nargs = '?', 
                             type = argparse.FileType('w'),
@@ -159,34 +182,86 @@ class BCRMatchArgumentParser:
         return {} 
 
 
-    def get_sequences_old(self, args, parser) :
-        ''' DESCRIPTION:
-            The sequences in file will take precedence over inline sequence.
-        '''
-        file_name = ''
-        sequences = ''
+
+    def prepare_training_mode(self, args):
+        # For training mode, user must provide the following:
+        #   * training-dataset-csv
+        #   * training-dataset-name
+        #   * training-dataset-version
+        # After that, I would need to create database for dataset.
+        if not getattr(args, 'training_dataset_csv'):
+            raise KeyError('Please provide path to the training dataset csv file.')
         
-        if getattr(args, 'inline_seqs'):
-            sequences = args.inline_seqs
-
-        # Throw help message as only 1 file should be submitted.
-        if ('fasta_file' in args) and ('peptide_file' in args) :
-            parser.print_help()
-            sys.exit(0)
-
-        if 'fasta_file' in args :
-            file_name = getattr(args, 'fasta_file').name
-
-        if 'peptide_file' in args :
-            file_name = getattr(args, 'fasta_file').name
+        # if not getattr(args, 'training_dataset_name'):
+        #     raise KeyError('Please provide name for the training dataset.')
         
-        if file_name :
-            with open(file_name, 'r') as f:
-                sequences = f.readlines()
-
-        # Simple validations
-        for sequence in sequences :
-            if len(sequence) < min(args.lengths):
-                raise Exception('Input sequence (%s) is too short.' %(sequence))
+        if not getattr(args, 'training_dataset_version'):
+            raise KeyError('Please provide dataset version.')
         
-        return sequences
+
+        training_dataset_file_path = getattr(args, 'training_dataset_csv')
+        training_dataset_name = os.path.basename(training_dataset_file_path)
+        training_dataset_name = os.path.splitext(training_dataset_name)[0]
+        training_dataset_version = getattr(args, 'training_dataset_version')
+        print('--------')
+        print('training-dataset-csv: %s' %(training_dataset_file_path))
+        print('training-dataset-name: %s' %(training_dataset_name))
+        print('training-dataset-version: %s' %(training_dataset_version))
+
+        dataset_db_header = [
+            'dataset_name',
+            'model',
+            'dataset',
+            'pickle_file',
+            'dataset_version'
+        ]
+
+
+        # Check existence of dataset db
+        database_path = Path('dataset-db')
+        models = ['rf', 'gnb', 'log_reg', 'xgb', 'ffnn']
+
+        if database_path.is_file():
+            # Check if the user provided entry already exists in the database
+            df = pd.read_csv('dataset-db', sep='\t')
+
+            # Only need to check dataset name and dataset version to check for existence
+            filtered_df = df[(df['dataset_name']==training_dataset_name) & ((df['dataset_version']==training_dataset_version))]
+
+            if 0 < len(filtered_df):
+                # If force flag is set, retrain
+                if getattr(args, 'retrain_dataset'):
+                    print('force retrain...')
+
+                else:
+                    raise Exception('All models have already been train under the %s (%s) dataset.' %(training_dataset_name, training_dataset_version))
+            
+            # entry doesn't exists, thus add to db
+            print("Need to create more entry")
+            # Create 5 dataset entry for all 5 models
+            data = []
+            for model in models:
+                pickle_file_path = '%s/%s/%s_%s.pkl' %(training_dataset_name, training_dataset_version, model, training_dataset_name)
+                data.append([training_dataset_name, model, training_dataset_file_path, pickle_file_path, training_dataset_version])
+            
+            additional_df = pd.DataFrame(data, columns=dataset_db_header)
+
+            # Append the data to the existing db
+            updated_df = pd.concat([df, additional_df])
+            
+            print('updating the database!')
+            updated_df.to_csv('dataset-db', sep='\t', index=False)
+
+        else:
+            # Create 5 dataset entry for all 5 models
+            data = []
+            for model in models:
+                pickle_file_path = '%s/%s/%s_%s.pkl' %(training_dataset_name, training_dataset_version, model, training_dataset_name)
+                data.append([training_dataset_name, model, training_dataset_file_path, pickle_file_path, training_dataset_version])
+            
+            df = pd.DataFrame(data, columns=dataset_db_header)
+
+            # create dataset db
+            df.to_csv('dataset-db', sep='\t', index=False)
+
+        

@@ -273,6 +273,17 @@ def main():
 	bcrmatch_parser = BCRMatchArgumentParser()
 	args, parser = bcrmatch_parser.parse_args(sys.argv[1:])
 
+	# Check training mode
+	if getattr(args, 'training_mode'):
+		print('Training mode on..')
+
+		# Validates required flags
+		bcrmatch_parser.prepare_training_mode(args)
+
+
+		sys.exit(0)
+
+
 	# Get all the sequences into a dictionary
 	sequence_info_dict = bcrmatch_parser.get_sequences(args, parser)
 
