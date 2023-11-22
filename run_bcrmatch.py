@@ -3,9 +3,12 @@ import sys
 import csv
 import pickle
 import tempfile
+import pandas as pd
 from bcrmatch_argparser import BCRMatchArgumentParser
 from bcrmatch import bcrmatch_functions, classify_abs
 from subprocess import Popen, PIPE
+from pathlib import Path
+
 
 # Absolute path to the TCRMatch program
 TCRMATCH_PATH = os.getenv('TCRMATCH_PATH', '/src/bcrmatch')
@@ -20,6 +23,8 @@ def get_results(complete_score_dict, rf_classifier, gnb_classifier,
 		for ab_pair in complete_score_dict.keys():
 			rowline = []
 			rowline.append(ab_pair)
+			print('!!!!!!!')
+			print(ab_pair)
 			# input_data = classify_abs.preprocess_input_data([0.98,1,1,1,1,0.98])
 			input_data = classify_abs.preprocess_input_data(
 			    complete_score_dict[ab_pair])
@@ -88,7 +93,7 @@ def train_classifiers(x_train, y_train):
 		pickle.dump(ffnn_classifier, f)
 
 
-def get_classifiers(rf_pkl, gnb_pkl):
+def get_classifiers():
 	with open("pickles/rf_classifier.pkl", "rb") as f:
 		rf_classifier = pickle.load(f)
 
@@ -265,7 +270,84 @@ def get_tcr_output_files_hk(tsv_content) :
 	return tcrout_filenames
 
 
+def update_db_content(parser, name, dataset, version):
+	dataset_db_header = [
+		'dataset_name',
+		'model',
+		'dataset',
+		'pickle_file',
+		'dataset_version'
+	]
 
+	# Create 5 dataset entry for all 5 models
+	data = []
+	for model in parser.MODELS:
+		pickle_file_path = '%s/%s/%s_%s.pkl' %(name, version, model, name)
+		data.append([name, model, dataset, pickle_file_path, version])
+	
+	return pd.DataFrame(data, columns=dataset_db_header)
+
+
+def start_training_mode(parser):
+# def prepare_training_mode(self, args):
+	# For training mode, user must provide the following:
+	#   * training-dataset-csv
+	#   * training-dataset-name
+	#   * training-dataset-version
+	training_dataset_file = parser.get_training_dataset()
+	training_dataset_name = os.path.basename(training_dataset_file)
+	training_dataset_name = os.path.splitext(training_dataset_name)[0]
+	training_dataset_version = parser.get_training_dataset_version()
+	force_retrain = parser.get_force_retrain_flag()
+	print('training-dataset-csv: %s' %(training_dataset_file))
+	print('training-dataset-name: %s' %(training_dataset_name))
+	print('training-dataset-version: %s' %(training_dataset_version))
+
+	# Check existence of dataset db
+	if Path(parser.DATASET_DB).is_file():
+		# Check if the user provided entry already exists in the database
+		df = pd.read_csv(parser.DATASET_DB, sep='\t')
+
+		# Only need to check dataset name and dataset version to check for existence
+		filtered_df = df[(df['dataset_name']==training_dataset_name) & (df['dataset_version']==training_dataset_version)]
+		residue_df = df[(df['dataset_name']!=training_dataset_name) | (df['dataset_version']!=training_dataset_version)]
+		
+		if 0 < len(filtered_df):
+			# If force flag is set, retrain
+			if force_retrain:
+				print('Force Retraining -- call train_model()')
+				train_models(training_dataset_file)
+				df = residue_df
+
+			else:
+				raise Exception('All models have already been train under the %s (%s) dataset.' %(training_dataset_name, training_dataset_version))
+		
+		train_models(training_dataset_file)
+		# entry doesn't exists, thus add to db		
+		df2 = update_db_content(parser, training_dataset_name, training_dataset_file, training_dataset_version)
+
+		# Append the data to the existing db
+		df = pd.concat([df, df2])
+		
+	else:
+		train_models(training_dataset_file)
+		df = update_db_content(parser, training_dataset_name, training_dataset_file, training_dataset_version)
+	
+	df.sort_values(['dataset_name', 'dataset_version'], ascending=[True, True], inplace=True)
+
+	# create dataset db
+	df.to_csv(parser.DATASET_DB, sep='\t', index=False)
+
+
+
+def train_models(dataset_file):
+	x_train, y_train = get_training_data(dataset_file)
+	
+	print("Pickling classifiers...")
+	
+	# Saves classifers into pickle files
+	train_classifiers(x_train, y_train)
+	
 
 
 def main():
@@ -273,33 +355,33 @@ def main():
 	bcrmatch_parser = BCRMatchArgumentParser()
 	args, parser = bcrmatch_parser.parse_args(sys.argv[1:])
 
+	bcrmatch_parser.set_training_mode(args)
+
 	# Check training mode
-	if getattr(args, 'training_mode'):
+	if bcrmatch_parser.get_training_mode():
 		print('Training mode on..')
 
-		# Validates required flags
+		# Validates required flags and create dataset-db
 		bcrmatch_parser.prepare_training_mode(args)
 
+		start_training_mode(bcrmatch_parser)
 
+		print("Finished training the models...")
 		sys.exit(0)
 
 
 	# Get all the sequences into a dictionary
 	sequence_info_dict = bcrmatch_parser.get_sequences(args, parser)
+	print(sequence_info_dict)
 
 	print("Retrieving all files containing the TCRMatch result...")
 	tcrout_files = get_tcr_output_files_hk(sequence_info_dict)
 
 	print("Retrieve scores as dictionary...")
 	score_dict = get_scoring_dict_from_csv(tcrout_files)
-	x_train, y_train = get_training_data("./datasets/abpairs_iedb.csv")
-
-	print("Pickling classifiers...")
-	# Saves classifers into pickle files
-	train_classifiers(x_train, y_train)
 
 	# Read from pickle file
-	rf_classifier, gnb_classifier, xgb_classifier, log_reg_classifier, ffnn_classifier = get_classifiers(x_train, y_train)
+	rf_classifier, gnb_classifier, xgb_classifier, log_reg_classifier, ffnn_classifier = get_classifiers()
 
 	print("Writing the final output to CSV...")
 	# Writes out to file

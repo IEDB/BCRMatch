@@ -12,6 +12,15 @@ class BCRMatchArgumentParser:
                     description = 'This is a command-line tool interface for BCRMatch.',
                     formatter_class=argparse.RawTextHelpFormatter)	
     
+    DATASET_DB = 'dataset-db'
+    MODELS = ['rf', 'gnb', 'log_reg', 'xgb', 'ffnn']
+
+    _training_mode = ''
+    _training_dataset = ''
+    _training_dataset_name = ''
+    _training_dataset_version = ''
+    _force_retrain_flag = ''
+
     def __init__(self):
         pass
 
@@ -182,86 +191,51 @@ class BCRMatchArgumentParser:
         return {} 
 
 
+    def get_training_mode(self):
+        return self._training_mode
 
+    def get_training_dataset(self):
+        return self._training_dataset
+    
+    # def get_training_dataset_name(self, args):
+    #     training_dataset_file_path = self.get_training_dataset(args)
+    #     training_dataset_name = os.path.basename(training_dataset_file_path)
+    #     training_dataset_name = os.path.splitext(training_dataset_name)[0]
+    #     return training_dataset_name
+    
+    def get_training_dataset_version(self):
+        return self._training_dataset_version
+    
+    def get_force_retrain_flag(self):
+        return self._force_retrain_flag
+    
+    def set_training_mode(self, args):
+        training_mode = getattr(args, 'training_mode')
+        self._training_mode = training_mode
+
+    def set_training_dataset(self, args):
+        training_dataset = getattr(args, 'training_dataset_csv')
+        self._training_dataset = training_dataset
+
+    def set_training_dataset_version(self, args):
+        training_dataset_version = getattr(args, 'training_dataset_version')
+        self._training_dataset_version = training_dataset_version
+
+    def set_force_retrain_flag(self, args):
+        force_flag = getattr(args, 'retrain_dataset')
+        self._force_retrain_flag = force_flag
+
+    
     def prepare_training_mode(self, args):
-        # For training mode, user must provide the following:
-        #   * training-dataset-csv
-        #   * training-dataset-name
-        #   * training-dataset-version
-        # After that, I would need to create database for dataset.
+        # Basic validation on training mode flags
         if not getattr(args, 'training_dataset_csv'):
             raise KeyError('Please provide path to the training dataset csv file.')
-        
-        # if not getattr(args, 'training_dataset_name'):
-        #     raise KeyError('Please provide name for the training dataset.')
         
         if not getattr(args, 'training_dataset_version'):
             raise KeyError('Please provide dataset version.')
         
+        # Set the values
+        self.set_training_dataset(args)
+        self.set_training_dataset_version(args)
+        self.set_force_retrain_flag(args)
 
-        training_dataset_file_path = getattr(args, 'training_dataset_csv')
-        training_dataset_name = os.path.basename(training_dataset_file_path)
-        training_dataset_name = os.path.splitext(training_dataset_name)[0]
-        training_dataset_version = getattr(args, 'training_dataset_version')
-        print('--------')
-        print('training-dataset-csv: %s' %(training_dataset_file_path))
-        print('training-dataset-name: %s' %(training_dataset_name))
-        print('training-dataset-version: %s' %(training_dataset_version))
-
-        dataset_db_header = [
-            'dataset_name',
-            'model',
-            'dataset',
-            'pickle_file',
-            'dataset_version'
-        ]
-
-
-        # Check existence of dataset db
-        database_path = Path('dataset-db')
-        models = ['rf', 'gnb', 'log_reg', 'xgb', 'ffnn']
-
-        if database_path.is_file():
-            # Check if the user provided entry already exists in the database
-            df = pd.read_csv('dataset-db', sep='\t')
-
-            # Only need to check dataset name and dataset version to check for existence
-            filtered_df = df[(df['dataset_name']==training_dataset_name) & ((df['dataset_version']==training_dataset_version))]
-
-            if 0 < len(filtered_df):
-                # If force flag is set, retrain
-                if getattr(args, 'retrain_dataset'):
-                    print('force retrain...')
-
-                else:
-                    raise Exception('All models have already been train under the %s (%s) dataset.' %(training_dataset_name, training_dataset_version))
-            
-            # entry doesn't exists, thus add to db
-            print("Need to create more entry")
-            # Create 5 dataset entry for all 5 models
-            data = []
-            for model in models:
-                pickle_file_path = '%s/%s/%s_%s.pkl' %(training_dataset_name, training_dataset_version, model, training_dataset_name)
-                data.append([training_dataset_name, model, training_dataset_file_path, pickle_file_path, training_dataset_version])
-            
-            additional_df = pd.DataFrame(data, columns=dataset_db_header)
-
-            # Append the data to the existing db
-            updated_df = pd.concat([df, additional_df])
-            
-            print('updating the database!')
-            updated_df.to_csv('dataset-db', sep='\t', index=False)
-
-        else:
-            # Create 5 dataset entry for all 5 models
-            data = []
-            for model in models:
-                pickle_file_path = '%s/%s/%s_%s.pkl' %(training_dataset_name, training_dataset_version, model, training_dataset_name)
-                data.append([training_dataset_name, model, training_dataset_file_path, pickle_file_path, training_dataset_version])
-            
-            df = pd.DataFrame(data, columns=dataset_db_header)
-
-            # create dataset db
-            df.to_csv('dataset-db', sep='\t', index=False)
-
-        
