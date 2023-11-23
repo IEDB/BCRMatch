@@ -43,26 +43,6 @@ def get_results(complete_score_dict, rf_classifier, gnb_classifier,
 			rowline.append(output_xgb[0])
 			rowline.append(output_ffnn[0][0])
 
-			# print(output_rf)
-			# print(output_gnb)
-
-			# if output_rf == 0:
-			# 	if output_gnb == 0:
-			# 		#print("Doesn't bind to same epitope as given antibody\n")
-			# 		rowline.append(output_rf)
-			# 		rowline.append(output_gnb)
-			# 		rowline.append("0")
-			# 	elif output_gnb == 1:
-			# 		#print("Binds to same epitope as given antibody\n")
-			# 		rowline.append(output_rf)
-			# 		rowline.append(output_gnb)
-			# 		rowline.append("1")
-			# elif output_rf == 1:
-			# 	#print("Binds to same epitope as given antibody\n")
-			# 	rowline.append(output_rf)
-			# 	rowline.append(output_gnb)
-			# 	rowline.append("1")
-
 			outfile_writer.writerow(rowline)
 
 
@@ -172,43 +152,7 @@ def get_scoring_dict_from_csv(file_names):
 	return all_score_dict
 
 
-def get_tcr_output_files(ifh1, input_files_path):
-	tcrout_filenames = []
-	for input_file_name in ifh1:
-		# Get full path to individual example input FASTA file
-		input_file_name = input_files_path + '/' + input_file_name
-
-		seq_dict = bcrmatch_functions.create_tcrmatch_input(input_file_name)
-
-
-		# Create temporary file containing 'seq_dict' to be used as input for
-		# TCRMatch
-		with tempfile.NamedTemporaryFile(mode='w', prefix='tcr_', suffix='_input', delete=False) as tmp:
-			tmp.write('\n'.join(list(seq_dict.values())))
-
-		# Run TCRMatch
-		cmd = ['%s/tcrmatch' % (TCRMATCH_PATH), '-i', '%s' %
-								(tmp.name), '-t', '10', '-s', '0', '-d', '%s' % (tmp.name)]
-
-		process = Popen(cmd, stdout=PIPE)
-		stdoutdata, stderrdata_ignored = process.communicate()
-		stdoutdata = stdoutdata.decode().strip()
-
-		# Format the results into a file
-		tcr_output_result = bcrmatch_functions.create_tcroutput(
-			stdoutdata, seq_dict)
-
-		with tempfile.NamedTemporaryFile(mode='w', prefix='tcr_', suffix='_output', delete=False) as tmp:
-			tmp.write(tcr_output_result)
-			tcrout_filenames.append(tmp.name)
-			
-
-		# TODO: Clean up the input temporary files
-
-	return tcrout_filenames
-
-
-def get_tcr_output_files_hk(tsv_content) :
+def get_tcr_output_files(tsv_content) :
 	# [['Seq_Name', 'CDRL1', 'CDRL2', 'CDRL3', 'CDRH1', 'CDRH2', 'CDRH3'], ['1', 'NNIGSKS', 'DDS', 'WDSSSDHA', 'GFTFDDY', 'SWNTGT', 'RSYVVAAEYYFH'], ['2', 'SQDISNY', 'YTS', 'DFTLPF', 'GYTFTNY', 'YPGNGD', 'GGSYRYDGGFD'], ['3', 'ASGNIHN', 'YYT', 'HFWSTPR', 'GFSLTGY', 'WGDGN', 'RDYRLD'], ['4', 'SESVDNYGISF', 'AAS', 'SKEVPL', 'GYTFTSS', 'HPNSGN', 'RYGSPYYFD'], ['5', 'ASQDISN', 'YFT', 'QYSTVPW', 'GYDFTHY', 'NTYTGE', 'PYYYGTSHWYFD']]
 	# for entry in tsv_content :
 
@@ -239,8 +183,6 @@ def get_tcr_output_files_hk(tsv_content) :
 		for i in range(len(sequence_names)):
 			seq_dict[str(sequence_names[i])] = v[i]
 		
-		print(seq_dict)
-
 		# Create temporary file containing 'seq_dict' to be used as input for TCRMatch
 		with tempfile.NamedTemporaryFile(mode='w', prefix='tcr_', suffix='_input', delete=False) as tmp:
 			tmp.write('\n'.join(list(seq_dict.values())))
@@ -252,8 +194,6 @@ def get_tcr_output_files_hk(tsv_content) :
 		process = Popen(cmd, stdout=PIPE)
 		stdoutdata, stderrdata_ignored = process.communicate()
 		stdoutdata = stdoutdata.decode().strip()
-		print(">>>>>>>>>>>>>>>>>>>>>>>>")
-		print(stdoutdata)
 
 		# Format the results into a file
 		tcr_output_result = bcrmatch_functions.create_tcroutput(stdoutdata, seq_dict)
@@ -262,7 +202,6 @@ def get_tcr_output_files_hk(tsv_content) :
 			tmp.write(tcr_output_result)
 			tcrout_filenames.append(tmp.name)
 			
-
 		# TODO: Clean up the input temporary files
 
 	return tcrout_filenames
@@ -287,7 +226,6 @@ def update_db_content(parser, name, dataset, version):
 
 
 def start_training_mode(parser):
-# def prepare_training_mode(self, args):
 	# For training mode, user must provide the following:
 	#   * training-dataset-csv
 	#   * training-dataset-name
@@ -297,9 +235,6 @@ def start_training_mode(parser):
 	training_dataset_name = os.path.splitext(training_dataset_name)[0]
 	training_dataset_version = parser.get_training_dataset_version()
 	force_retrain = parser.get_force_retrain_flag()
-	print('training-dataset-csv: %s' %(training_dataset_file))
-	print('training-dataset-name: %s' %(training_dataset_name))
-	print('training-dataset-version: %s' %(training_dataset_version))
 
 	# Check existence of dataset db
 	if Path(parser.DATASET_DB).is_file():
@@ -363,9 +298,6 @@ def main():
 	if bcrmatch_parser.get_training_mode():
 		print('Training mode on..')
 
-		# Validates required flags and create dataset-db
-		bcrmatch_parser.prepare_training_mode(args)
-
 		start_training_mode(bcrmatch_parser)
 
 		print("Finished training the models...")
@@ -374,13 +306,13 @@ def main():
 
 	# Get all the sequences into a dictionary
 	sequence_info_dict = bcrmatch_parser.get_sequences(args, parser)
-	print(sequence_info_dict)
+	# print(sequence_info_dict)
 
 	training_dataset_file = bcrmatch_parser.get_training_dataset()
 	x_train, y_train = get_training_data(training_dataset_file)
 
 	print("Retrieving all files containing the TCRMatch result...")
-	tcrout_files = get_tcr_output_files_hk(sequence_info_dict)
+	tcrout_files = get_tcr_output_files(sequence_info_dict)
 
 	print("Retrieve scores as dictionary...")
 	score_dict = get_scoring_dict_from_csv(tcrout_files)

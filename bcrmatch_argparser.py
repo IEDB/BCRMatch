@@ -60,7 +60,7 @@ class BCRMatchArgumentParser:
                             help = 'Path to the database/json created or modified in the training.')
         self.parser.add_argument('--training-dataset-csv', '-tc',
                             dest = 'training_dataset_csv',
-                            required = False,
+                            required = True,
                             help = 'Path to the CSV file that will be used for training.')
         self.parser.add_argument('--training-dataset-name', '-tn', 
                             dest = 'training_dataset_name', 
@@ -226,26 +226,15 @@ class BCRMatchArgumentParser:
         self._force_retrain_flag = force_flag
 
     def validate(self, args):
-        print(args)
+        for arg in vars(args):
+            if arg == 'training_dataset_csv':
+                self.set_training_dataset(args)
 
-        # Set the values
-        self.set_training_mode(args)
-        self.set_training_dataset(args)
-        self.set_training_dataset_version(args)
-        self.set_force_retrain_flag(args)
+            if arg == 'training_dataset_version':
+                self.set_training_dataset_version(args)
 
+            if arg == 'training_mode':
+                self.set_training_mode(args)
 
-    
-    def prepare_training_mode(self, args):
-        # Basic validation on training mode flags
-        if not getattr(args, 'training_dataset_csv'):
-            raise KeyError('Please provide path to the training dataset csv file.')
-        
-        if not getattr(args, 'training_dataset_version'):
-            raise KeyError('Please provide dataset version.')
-        
-        # Set the values
-        self.set_training_dataset(args)
-        self.set_training_dataset_version(args)
-        self.set_force_retrain_flag(args)
-
+            if arg == 'retrain_dataset':
+                self.set_force_retrain_flag(args)
