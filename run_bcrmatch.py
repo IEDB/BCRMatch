@@ -282,16 +282,26 @@ def train_models(dataset_file):
 	train_classifiers(x_train, y_train)
 	
 
+def get_available_datasets(db):
+	df = pd.read_csv(db, sep='\t')
+
+	sub_df = df.groupby(['dataset_name', 'dataset_version'])
+
+	return pd.DataFrame(sub_df.size().reset_index(name='count')).drop(columns=['count'])
+
 
 def main():
 	print("Starting program...")
 	bcrmatch_parser = BCRMatchArgumentParser()
 	args, parser = bcrmatch_parser.parse_args(sys.argv[1:])
 
-	bcrmatch_parser.set_training_mode(args)
-
 	# Basic validation and prep on all the params(flags)
 	bcrmatch_parser.validate(args)
+
+	if bcrmatch_parser.get_list_datasets_flag():
+		dataset_df = get_available_datasets(bcrmatch_parser.DATASET_DB)
+		print(dataset_df.to_string(index=False))
+		sys.exit(0)
 	
 
 	# Check training mode

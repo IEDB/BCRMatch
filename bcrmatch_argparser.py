@@ -19,7 +19,8 @@ class BCRMatchArgumentParser:
     _training_dataset = ''
     _training_dataset_name = ''
     _training_dataset_version = ''
-    _force_retrain_flag = ''
+    _force_retrain_flag = False
+    _list_datasets_flag = False
 
     def __init__(self):
         pass
@@ -84,7 +85,11 @@ class BCRMatchArgumentParser:
                             required = False,
                             action='store_true',
                             help = 'Train the classifiers on the provided dataset.')
-        
+        self.parser.add_argument('--list-datasets', '-l',
+                            dest = 'list_datasets',
+                            required = False,
+                            action='store_true',
+                            help = 'Displays all unique dataset/version.')
         self.parser.add_argument('--output', '-o', dest = 'output', required = False,
                             nargs = '?', 
                             type = argparse.FileType('w'),
@@ -191,6 +196,7 @@ class BCRMatchArgumentParser:
         return {} 
 
 
+    # Getters
     def get_training_mode(self):
         return self._training_mode
 
@@ -208,7 +214,12 @@ class BCRMatchArgumentParser:
     
     def get_force_retrain_flag(self):
         return self._force_retrain_flag
-    
+
+    def get_list_datasets_flag(self):
+        return self._list_datasets_flag
+
+
+    # Setters 
     def set_training_mode(self, args):
         training_mode = getattr(args, 'training_mode')
         self._training_mode = training_mode
@@ -225,6 +236,10 @@ class BCRMatchArgumentParser:
         force_flag = getattr(args, 'retrain_dataset')
         self._force_retrain_flag = force_flag
 
+    def set_list_datasets(self, args):
+        list_datasets_flag = getattr(args, 'list_datasets')
+        self._list_datasets_flag = list_datasets_flag
+
     def validate(self, args):
         for arg in vars(args):
             if arg == 'training_dataset_csv':
@@ -238,3 +253,6 @@ class BCRMatchArgumentParser:
 
             if arg == 'retrain_dataset':
                 self.set_force_retrain_flag(args)
+
+            if arg == 'list_datasets':
+                self.set_list_datasets(args)
