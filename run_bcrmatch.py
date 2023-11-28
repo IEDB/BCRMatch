@@ -14,8 +14,7 @@ from pathlib import Path
 TCRMATCH_PATH = os.getenv('TCRMATCH_PATH', '/src/bcrmatch')
 
 
-def get_results(complete_score_dict, rf_classifier, gnb_classifier,
-                log_reg_classifier, xgb_classifier, ffnn_classifier):
+def predict(complete_score_dict, classifiers):
 	with open("output.csv", "w", newline='') as csvfile:
 		outfile_writer = csv.writer(csvfile, delimiter=',')
 		outfile_writer.writerow(["Antibody pair", "RF Prediction", "LR Prediction",
@@ -25,52 +24,17 @@ def get_results(complete_score_dict, rf_classifier, gnb_classifier,
 			rowline.append(ab_pair)
 
 			# input_data = classify_abs.preprocess_input_data([0.98,1,1,1,1,0.98])
-			input_data = classify_abs.preprocess_input_data(
-			    complete_score_dict[ab_pair])
-
-			# output_rf = rf_classifier.predict(input_data)
-			# output_gnb = gnb_classifier.predict(input_data)
-
-			output_rf = rf_classifier.predict_proba(input_data)[:, 1]
-			output_lr = log_reg_classifier.predict_proba(input_data)[:, 1]
-			output_gnb = gnb_classifier.predict_proba(input_data)[:, 1]
-			output_xgb = xgb_classifier.predict_proba(input_data)[:, 1]
-			output_ffnn = ffnn_classifier.predict(input_data)
-
-			rowline.append(output_rf[0])
-			rowline.append(output_lr[0])
-			rowline.append(output_gnb[0])
-			rowline.append(output_xgb[0])
-			rowline.append(output_ffnn[0][0])
-
-			outfile_writer.writerow(rowline)
+			input_data = classify_abs.preprocess_input_data(complete_score_dict[ab_pair])
 
 
-def predict(complete_score_dict, classifier, version=None, db=None):
-	
-		for ab_pair in complete_score_dict.keys():
-			rowline = []
-			rowline.append(ab_pair)
-
-			# input_data = classify_abs.preprocess_input_data([0.98,1,1,1,1,0.98])
-			input_data = classify_abs.preprocess_input_data(
-			    complete_score_dict[ab_pair])
-
-			# output_rf = rf_classifier.predict(input_data)
-			# output_gnb = gnb_classifier.predict(input_data)
-
-			output_rf = rf_classifier.predict_proba(input_data)[:, 1]
-			output_lr = log_reg_classifier.predict_proba(input_data)[:, 1]
-			output_gnb = gnb_classifier.predict_proba(input_data)[:, 1]
-			output_xgb = xgb_classifier.predict_proba(input_data)[:, 1]
-			output_ffnn = ffnn_classifier.predict(input_data)
-
-			rowline.append(output_rf[0])
-			rowline.append(output_lr[0])
-			rowline.append(output_gnb[0])
-			rowline.append(output_xgb[0])
-			rowline.append(output_ffnn[0][0])
-
+			for classifier_name, classifier_obj in classifiers.items():
+				if classifier_name == 'ffnn':
+					output = classifier_obj.predict(input_data)
+					rowline.append(output[0][0])
+				else:
+					output = classifier_obj.predict_proba(input_data)[:, 1]
+					rowline.append(output[0])
+				
 			outfile_writer.writerow(rowline)
 
 
@@ -367,17 +331,9 @@ def main():
 	print("Retrieve scores as dictionary...")
 	score_dict = get_scoring_dict_from_csv(tcrout_files)
 	
-	# lookup 
 	classifiers = get_classifiers(training_dataset_name, dataset_ver, db=bcrmatch_parser.DATASET_DB)
-	for k, v in classifiers.items():
-		print(k, v)
-	# Read from pickle file
-	# rf_classifier, gnb_classifier, xgb_classifier, log_reg_classifier, ffnn_classifier = get_classifiers()
 
 	print("Writing the final output to CSV...")
-	# Writes out to file
-	# get_results(score_dict, rf_classifier, gnb_classifier, log_reg_classifier, xgb_classifier, ffnn_classifier)
-
 	predict(score_dict, classifiers)
 
 	print("Completed!")
