@@ -74,23 +74,23 @@ def predict(complete_score_dict, classifier, version=None, db=None):
 			outfile_writer.writerow(rowline)
 
 
-def get_classifiers():
-	with open("pickles/rf_classifier.pkl", "rb") as f:
-		rf_classifier = pickle.load(f)
+def get_classifiers(dataset_name, version, db):
+	df = pd.read_csv(db, sep='\t')
+	filtered_df = df[(df['dataset_name']==dataset_name) & (df['dataset_version']==version)]	
+	classifiers = {}
 
-	with open("pickles/gnb_classifier.pkl", "rb") as f:
-		gnb_classifier = pickle.load(f)
+	for i, row in filtered_df.iterrows():
+		pkl_path = 'pickles/%s' %(row['pickle_file'])
+		classifier = row['model']
+		
+		try:
+			with open(pkl_path, 'rb') as f:
+				classifiers[classifier] = pickle.load(f)
+		except:
+			sys.tracebacklimit = 0
+			raise Exception('Please check if the %s (%s) has been saved in a pickle file.' %(row['model'], row['dataset_version']))
 
-	with open("pickles/xgb_classifier.pkl", "rb") as f:
-		xgb_classifier = pickle.load(f)
-
-	with open("pickles/log_reg_classifier.pkl", "rb") as f:
-		log_reg_classifier = pickle.load(f)
-
-	with open("pickles/ffnn_classifier.pkl", "rb") as f:
-		ffnn_classifier = pickle.load(f)
-
-	return rf_classifier, gnb_classifier, xgb_classifier, log_reg_classifier, ffnn_classifier
+	return classifiers
 
 
 def save_classifiers(dataset, version, classifiers):
@@ -325,14 +325,6 @@ def get_available_datasets(db):
 	return pd.DataFrame(sub_df.size().reset_index(name='count')).drop(columns=['count'])
 
 
-# def get_classifier2(dataset, version, db):
-# 	df = pd.read_csv(db, sep='\t')
-
-
-
-# 	pass
-
-
 def main():
 	print("Starting program...")
 	bcrmatch_parser = BCRMatchArgumentParser()
@@ -361,6 +353,8 @@ def main():
 	sequence_info_dict = bcrmatch_parser.get_sequences(args, parser)
 	# print(sequence_info_dict)
 	training_dataset_file = bcrmatch_parser.get_training_dataset()
+	training_dataset_name = os.path.basename(training_dataset_file)
+	training_dataset_name = os.path.splitext(training_dataset_name)[0]
 	dataset_ver = bcrmatch_parser.get_training_dataset_version()
 
 	# get training data
@@ -374,8 +368,9 @@ def main():
 	score_dict = get_scoring_dict_from_csv(tcrout_files)
 	
 	# lookup 
-	classifier = get_classifier2(training_dataset_file, dataset_ver, db=bcrmatch_parser.DATASET_DB)
-
+	classifiers = get_classifiers(training_dataset_name, dataset_ver, db=bcrmatch_parser.DATASET_DB)
+	for k, v in classifiers.items():
+		print(k, v)
 	# Read from pickle file
 	# rf_classifier, gnb_classifier, xgb_classifier, log_reg_classifier, ffnn_classifier = get_classifiers()
 
@@ -383,7 +378,7 @@ def main():
 	# Writes out to file
 	# get_results(score_dict, rf_classifier, gnb_classifier, log_reg_classifier, xgb_classifier, ffnn_classifier)
 
-	# predict(score_dict, rf_classifier, db=bcrmatch_parser.DATASET_DB)
+	predict(score_dict, classifiers)
 
 	print("Completed!")
 
