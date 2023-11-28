@@ -9,6 +9,12 @@
 > **_NOTE_**<br>
 > Highly suggest to setup virtual environment with `Python 3.8.10`.
 
+1. Install requirements.
+    ```
+    pip install -r requirements.txt
+    ```
+
+
 ### Docker
 Follow the steps to run the program through Docker.
 1. Build image form `Dockerfile`:
