@@ -80,7 +80,7 @@ class BCRMatchArgumentParser:
                             required = False,
                             action='store_true',
                             help = 'Train the classifiers on the provided dataset.')
-        self.parser.add_argument('--force', '-f',
+        self.parser.add_argument('--force-training', '-f',
                             dest = 'retrain_dataset',
                             required = False,
                             action='store_true',

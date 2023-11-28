@@ -67,7 +67,9 @@ Here is an example on training classifiers with `Abligity` dataset.
 ```
 python run_bcrmatch.py -tm -tc datasets/abpairs_abligity.csv -tv v1
 ```
-The above code will save the classifier as a pickle file and save it to `pickles/<dataset_name>/<dataset_version>/<dataset_name>.pkl`.
+The above code will save the classifier as a pickle file and save it to `pickles/<dataset_name>/<dataset_version>/<classifier>_<dataset_name>.pkl`.
+> **_EXAMPLE_**<br>
+> The `rf_classifier` that's trained under `v1` of `Abligity` dataset will be saved to `pickles/abpairs_abligity/v1/rf_abpairs_abligity.pkl`
 
 ### Force training
 If same dataset and dataset version is provided to train, the program will raise an error.
@@ -80,6 +82,8 @@ This will force the program to retrain the classifiers.
 ```
 python run_bcrmatch.py -tm -tc datasets/abpairs_abligity.csv -tv v1 -f
 ```
+
+## Prediction
 
 
 #### What gets outputted?

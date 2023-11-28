@@ -46,29 +46,32 @@ def get_results(complete_score_dict, rf_classifier, gnb_classifier,
 			outfile_writer.writerow(rowline)
 
 
-def train_classifiers(x_train, y_train):
-	# Trains data, then saves the model as pickle file.
-	rf_classifier = classify_abs.RF(x_train, y_train)
-	gnb_classifier = classify_abs.GNB(x_train, y_train)
-	log_reg_classifier = classify_abs.LR(x_train, y_train)
-	xgb_classifier = classify_abs.XGB(x_train, y_train)
-	ffnn_classifier = classify_abs.FFNN(x_train, y_train)
-	# ffnn_classfier.save('ffnn_abligity.h5')
+def predict(complete_score_dict, classifier, version=None, db=None):
+	
+		for ab_pair in complete_score_dict.keys():
+			rowline = []
+			rowline.append(ab_pair)
 
-	with open("pickles/rf_classifier.pkl", "wb") as f:
-		pickle.dump(rf_classifier, f)
+			# input_data = classify_abs.preprocess_input_data([0.98,1,1,1,1,0.98])
+			input_data = classify_abs.preprocess_input_data(
+			    complete_score_dict[ab_pair])
 
-	with open("pickles/gnb_classifier.pkl", "wb") as f:
-		pickle.dump(gnb_classifier, f)
+			# output_rf = rf_classifier.predict(input_data)
+			# output_gnb = gnb_classifier.predict(input_data)
 
-	with open("pickles/log_reg_classifier.pkl", "wb") as f:
-		pickle.dump(log_reg_classifier, f)
+			output_rf = rf_classifier.predict_proba(input_data)[:, 1]
+			output_lr = log_reg_classifier.predict_proba(input_data)[:, 1]
+			output_gnb = gnb_classifier.predict_proba(input_data)[:, 1]
+			output_xgb = xgb_classifier.predict_proba(input_data)[:, 1]
+			output_ffnn = ffnn_classifier.predict(input_data)
 
-	with open("pickles/xgb_classifier.pkl", "wb") as f:
-		pickle.dump(xgb_classifier, f)
+			rowline.append(output_rf[0])
+			rowline.append(output_lr[0])
+			rowline.append(output_gnb[0])
+			rowline.append(output_xgb[0])
+			rowline.append(output_ffnn[0][0])
 
-	with open("pickles/ffnn_classifier.pkl", "wb") as f:
-		pickle.dump(ffnn_classifier, f)
+			outfile_writer.writerow(rowline)
 
 
 def get_classifiers():
@@ -90,12 +93,49 @@ def get_classifiers():
 	return rf_classifier, gnb_classifier, xgb_classifier, log_reg_classifier, ffnn_classifier
 
 
-def get_training_data(file_name):
-	# X_train, y_train =
-	# classify_abs.preprocess_ml_dataset("test_subset_iedb_ml_dataset_filtered.csv")
-	X_train, y_train = classify_abs.preprocess_ml_dataset(file_name)
-	return X_train, y_train
+def save_classifiers(dataset, version, classifiers):
+	# Saves classifers into pickle files
+	print("Pickling classifiers...")
 
+	for classifier_name, classifier_obj in classifiers.items():
+		# Create directories recursively even if they don't exists
+		base_path = 'pickles/%s/%s' %(dataset, version)
+		path = Path(base_path)
+		path.mkdir(parents=True, exist_ok=True)
+
+		pkl_file_name = '%s_%s.pkl' %(classifier_name, dataset)
+		pkl_file_path = '%s/%s' %(base_path, pkl_file_name)
+		
+		print(pkl_file_path)
+		with open(pkl_file_path, 'wb') as f:
+			pickle.dump(classifier_obj, f)
+
+
+def train_classifiers(x_train, y_train):
+	# Trains data, then saves the model as pickle file.
+	rf = classify_abs.RF(x_train, y_train)
+	gnb = classify_abs.GNB(x_train, y_train)
+	log_reg = classify_abs.LR(x_train, y_train)
+	xgb = classify_abs.XGB(x_train, y_train)
+	ffnn = classify_abs.FFNN(x_train, y_train)
+
+	classifiers = {
+		'rf': rf,
+		'gnb': gnb,
+		'log_reg': log_reg,
+		'xgb': xgb,
+		'ffnn': ffnn
+	}
+
+	return classifiers
+
+
+def train_models(dataset_file):
+	x_train, y_train = classify_abs.preprocess_ml_dataset(dataset_file)
+	
+	# Train classifiers
+	return train_classifiers(x_train, y_train)
+	
 
 def compile_scores(file_name):
 	score_dict = {}
@@ -249,13 +289,17 @@ def start_training_mode(parser):
 			# If force flag is set, retrain
 			if force_retrain:
 				print('Force Retraining -- call train_model()')
-				train_models(training_dataset_file)
+				classifiers = train_models(training_dataset_file)
+				save_classifiers(training_dataset_name, training_dataset_version, classifiers)
 				df = residue_df
 
 			else:
+				# Do not print tracebacks
+				sys.tracebacklimit = 0
 				raise Exception('All models have already been train under the %s (%s) dataset.' %(training_dataset_name, training_dataset_version))
 		
-		train_models(training_dataset_file)
+		classifiers = train_models(training_dataset_file)
+		save_classifiers(training_dataset_name, training_dataset_version, classifiers)
 		# entry doesn't exists, thus add to db		
 		df2 = update_db_content(parser, training_dataset_name, training_dataset_file, training_dataset_version)
 
@@ -263,7 +307,8 @@ def start_training_mode(parser):
 		df = pd.concat([df, df2])
 		
 	else:
-		train_models(training_dataset_file)
+		classifiers = train_models(training_dataset_file)
+		save_classifiers(training_dataset_name, training_dataset_version, classifiers)
 		df = update_db_content(parser, training_dataset_name, training_dataset_file, training_dataset_version)
 	
 	df.sort_values(['dataset_name', 'dataset_version'], ascending=[True, True], inplace=True)
@@ -272,22 +317,20 @@ def start_training_mode(parser):
 	df.to_csv(parser.DATASET_DB, sep='\t', index=False)
 
 
-
-def train_models(dataset_file):
-	x_train, y_train = get_training_data(dataset_file)
-	
-	print("Pickling classifiers...")
-	
-	# Saves classifers into pickle files
-	train_classifiers(x_train, y_train)
-	
-
 def get_available_datasets(db):
 	df = pd.read_csv(db, sep='\t')
 
 	sub_df = df.groupby(['dataset_name', 'dataset_version'])
 
 	return pd.DataFrame(sub_df.size().reset_index(name='count')).drop(columns=['count'])
+
+
+# def get_classifier2(dataset, version, db):
+# 	df = pd.read_csv(db, sep='\t')
+
+
+
+# 	pass
 
 
 def main():
@@ -317,22 +360,30 @@ def main():
 	# Get all the sequences into a dictionary
 	sequence_info_dict = bcrmatch_parser.get_sequences(args, parser)
 	# print(sequence_info_dict)
-
 	training_dataset_file = bcrmatch_parser.get_training_dataset()
-	x_train, y_train = get_training_data(training_dataset_file)
+	dataset_ver = bcrmatch_parser.get_training_dataset_version()
+
+	# get training data
+	x_train, y_train = classify_abs.preprocess_ml_dataset(training_dataset_file)
+	# x_train, y_train = get_training_data(training_dataset_file)
 
 	print("Retrieving all files containing the TCRMatch result...")
 	tcrout_files = get_tcr_output_files(sequence_info_dict)
 
 	print("Retrieve scores as dictionary...")
 	score_dict = get_scoring_dict_from_csv(tcrout_files)
+	
+	# lookup 
+	classifier = get_classifier2(training_dataset_file, dataset_ver, db=bcrmatch_parser.DATASET_DB)
 
 	# Read from pickle file
-	rf_classifier, gnb_classifier, xgb_classifier, log_reg_classifier, ffnn_classifier = get_classifiers()
+	# rf_classifier, gnb_classifier, xgb_classifier, log_reg_classifier, ffnn_classifier = get_classifiers()
 
 	print("Writing the final output to CSV...")
 	# Writes out to file
-	get_results(score_dict, rf_classifier, gnb_classifier, log_reg_classifier, xgb_classifier, ffnn_classifier)
+	# get_results(score_dict, rf_classifier, gnb_classifier, log_reg_classifier, xgb_classifier, ffnn_classifier)
+
+	# predict(score_dict, rf_classifier, db=bcrmatch_parser.DATASET_DB)
 
 	print("Completed!")
 
