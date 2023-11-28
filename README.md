@@ -3,8 +3,14 @@
 > **_NOTE:_** <br>
 > TCRMatch is required to run BCRMatch. Currently, Docker is using [Harbor TCRMatch](https://harbor.lji.org/harbor/projects/5/repositories/iedb-public%2Ftcrmatch/tags/0.1.1) as the base image.
 
+
+## Setup
+### Linux
+> **_NOTE_**<br>
+> Highly suggest to setup virtual environment with `Python 3.8.10`.
+
 ### Docker
-It is possible to run this inside a Docker container.
+Follow the steps to run the program through Docker.
 1. Build image form `Dockerfile`:
     ```
     docker build -t bcrmatch .
