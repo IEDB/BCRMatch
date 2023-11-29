@@ -9,13 +9,13 @@ class BCRMatchArgumentParser:
                     description = 'This is a command-line tool interface for BCRMatch.',
                     formatter_class=argparse.RawTextHelpFormatter)	
     
-    DATASET_DB = 'dataset-db'
     MODELS = ['rf', 'gnb', 'log_reg', 'xgb', 'ffnn']
 
     _training_mode = ''
     _training_dataset = ''
     _training_dataset_name = ''
     _training_dataset_version = ''
+    _dataset_db = ''
     _force_retrain_flag = False
     _list_datasets_flag = False
 
@@ -51,10 +51,9 @@ class BCRMatchArgumentParser:
                             type = argparse.FileType('r'),
                             default = argparse.SUPPRESS,
                             help = 'FASTA file containing 3 CDRLs.')
-        self.parser.add_argument('--database', '-d', dest = 'database', required = False,
-                            nargs = '+', 
+        self.parser.add_argument('--database', '-db', dest = 'database', required = False,
                             type = str,
-                            default = argparse.SUPPRESS,
+                            default = 'dataset-db',
                             help = 'Path to the database/json created or modified in the training.')
         self.parser.add_argument('--training-dataset-csv', '-tc',
                             dest = 'training_dataset_csv',
@@ -215,6 +214,9 @@ class BCRMatchArgumentParser:
     def get_list_datasets_flag(self):
         return self._list_datasets_flag
 
+    def get_database(self):
+        return self._dataset_db
+
 
     # Setters 
     def set_training_mode(self, args):
@@ -237,6 +239,11 @@ class BCRMatchArgumentParser:
         list_datasets_flag = getattr(args, 'list_datasets')
         self._list_datasets_flag = list_datasets_flag
 
+    def set_database(self, args):
+        db_path = getattr(args, 'database')
+        self._dataset_db = db_path
+        
+
     def validate(self, args):
         for arg in vars(args):
             if arg == 'training_dataset_csv':
@@ -253,3 +260,6 @@ class BCRMatchArgumentParser:
 
             if arg == 'list_datasets':
                 self.set_list_datasets(args)
+
+            if arg == 'database':
+                self.set_database(args)

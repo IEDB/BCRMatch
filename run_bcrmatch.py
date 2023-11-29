@@ -12,6 +12,7 @@ from pathlib import Path
 
 # Absolute path to the TCRMatch program
 TCRMATCH_PATH = os.getenv('TCRMATCH_PATH', '/src/bcrmatch')
+BASE_DIR = Path(__file__).parent.absolute()
 
 
 def predict(complete_score_dict, classifiers):
@@ -44,9 +45,9 @@ def get_classifiers(dataset_name, version, db):
 	classifiers = {}
 
 	for i, row in filtered_df.iterrows():
-		pkl_path = 'pickles/%s' %(row['pickle_file'])
+		pkl_path = '%s/pickles/%s' %(BASE_DIR, row['pickle_file'])
 		classifier = row['model']
-		
+
 		try:
 			with open(pkl_path, 'rb') as f:
 				classifiers[classifier] = pickle.load(f)
@@ -63,7 +64,7 @@ def save_classifiers(dataset, version, classifiers):
 
 	for classifier_name, classifier_obj in classifiers.items():
 		# Create directories recursively even if they don't exists
-		base_path = 'pickles/%s/%s' %(dataset, version)
+		base_path = '%s/pickles/%s/%s' %(BASE_DIR, dataset, version)
 		path = Path(base_path)
 		path.mkdir(parents=True, exist_ok=True)
 
@@ -239,11 +240,12 @@ def start_training_mode(parser):
 	training_dataset_name = os.path.splitext(training_dataset_name)[0]
 	training_dataset_version = parser.get_training_dataset_version()
 	force_retrain = parser.get_force_retrain_flag()
+	database_db = parser.get_database()
 
 	# Check existence of dataset db
-	if Path(parser.DATASET_DB).is_file():
+	if Path(database_db).is_file():
 		# Check if the user provided entry already exists in the database
-		df = pd.read_csv(parser.DATASET_DB, sep='\t')
+		df = pd.read_csv(database_db, sep='\t')
 
 		# Only need to check dataset name and dataset version to check for existence
 		filtered_df = df[(df['dataset_name']==training_dataset_name) & (df['dataset_version']==training_dataset_version)]
@@ -278,7 +280,7 @@ def start_training_mode(parser):
 	df.sort_values(['dataset_name', 'dataset_version'], ascending=[True, True], inplace=True)
 
 	# create dataset db
-	df.to_csv(parser.DATASET_DB, sep='\t', index=False)
+	df.to_csv(database_db, sep='\t', index=False)
 
 
 def get_available_datasets(db):
@@ -297,8 +299,10 @@ def main():
 	# Basic validation and prep on all the params(flags)
 	bcrmatch_parser.validate(args)
 
+	dataset_db = bcrmatch_parser.get_database()
+
 	if bcrmatch_parser.get_list_datasets_flag():
-		dataset_df = get_available_datasets(bcrmatch_parser.DATASET_DB)
+		dataset_df = get_available_datasets(dataset_db)
 		print(dataset_df.to_string(index=False))
 		sys.exit(0)
 	
@@ -331,7 +335,7 @@ def main():
 	print("Retrieve scores as dictionary...")
 	score_dict = get_scoring_dict_from_csv(tcrout_files)
 	
-	classifiers = get_classifiers(training_dataset_name, dataset_ver, db=bcrmatch_parser.DATASET_DB)
+	classifiers = get_classifiers(training_dataset_name, dataset_ver, db=dataset_db)
 
 	print("Writing the final output to CSV...")
 	predict(score_dict, classifiers)
