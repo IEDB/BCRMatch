@@ -1,14 +1,11 @@
-import sys
-import os
 import argparse
 import textwrap
 import pandas as pd
-from pathlib import Path
 
 
 class BCRMatchArgumentParser:
     parser = argparse.ArgumentParser(
-                    usage = '%(prog)s <fasta_sequence> [-a] <allele_list> [-l] <length_list>',
+                    usage = '%(prog)s [-i] <input_tsv> [-tc] <training_dataset_csv>',
                     description = 'This is a command-line tool interface for BCRMatch.',
                     formatter_class=argparse.RawTextHelpFormatter)	
     
@@ -63,12 +60,12 @@ class BCRMatchArgumentParser:
                             dest = 'training_dataset_csv',
                             required = True,
                             help = 'Path to the CSV file that will be used for training.')
-        self.parser.add_argument('--training-dataset-name', '-tn', 
-                            dest = 'training_dataset_name', 
-                            required = False, 
-                            type = str,
-                            default = argparse.SUPPRESS,
-                            help = 'Name of the training dataset to use for the prediction.')
+        # self.parser.add_argument('--training-dataset-name', '-tn', 
+        #                     dest = 'training_dataset_name', 
+        #                     required = False, 
+        #                     type = str,
+        #                     default = argparse.SUPPRESS,
+        #                     help = 'Name of the training dataset to use for the prediction.')
         self.parser.add_argument('--training_dataset-version', '-tv',
                             dest = 'training_dataset_version',
                             required = False,
