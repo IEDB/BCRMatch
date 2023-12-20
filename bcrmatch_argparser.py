@@ -57,7 +57,7 @@ class BCRMatchArgumentParser:
                             help = 'Path to the database/json created or modified in the training.')
         self.parser.add_argument('--training-dataset-csv', '-tc',
                             dest = 'training_dataset_csv',
-                            required = True,
+                            required = False,
                             help = 'Path to the CSV file that will be used for training.')
         # self.parser.add_argument('--training-dataset-name', '-tn', 
         #                     dest = 'training_dataset_name', 
