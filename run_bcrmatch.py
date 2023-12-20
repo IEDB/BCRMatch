@@ -236,11 +236,11 @@ def start_training_mode(parser):
 	#   * training-dataset-name
 	#   * training-dataset-version
 	training_dataset_file = parser.get_training_dataset()
-	training_dataset_name = os.path.basename(training_dataset_file)
-	training_dataset_name = os.path.splitext(training_dataset_name)[0]
+	training_dataset_name = parser.get_training_dataset_name()
 	training_dataset_version = parser.get_training_dataset_version()
 	force_retrain = parser.get_force_retrain_flag()
 	database_db = parser.get_database()
+	
 
 	# Check existence of dataset db
 	if Path(database_db).is_file():
@@ -321,9 +321,11 @@ def main():
 	sequence_info_dict = bcrmatch_parser.get_sequences(args, parser)
 	# print(sequence_info_dict)
 	training_dataset_file = bcrmatch_parser.get_training_dataset()
-	training_dataset_name = os.path.basename(training_dataset_file)
-	training_dataset_name = os.path.splitext(training_dataset_name)[0]
+	training_dataset_name = bcrmatch_parser.get_training_dataset_name()
 	dataset_ver = bcrmatch_parser.get_training_dataset_version()
+
+	# lookup dataset file from the database
+	# TODO
 
 	# get training data
 	x_train, y_train = classify_abs.preprocess_ml_dataset(training_dataset_file)

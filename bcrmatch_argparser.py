@@ -1,6 +1,7 @@
 import argparse
 import textwrap
 import pandas as pd
+import os
 
 
 class BCRMatchArgumentParser:
@@ -62,12 +63,15 @@ class BCRMatchArgumentParser:
                             dest = 'training_dataset_csv',
                             required = False,
                             help = 'Path to the CSV file that will be used for training.')
-        # self.parser.add_argument('--training-dataset-name', '-tn', 
-        #                     dest = 'training_dataset_name', 
-        #                     required = False, 
-        #                     type = str,
-        #                     default = argparse.SUPPRESS,
-        #                     help = 'Name of the training dataset to use for the prediction.')
+        self.parser.add_argument('--training-dataset-name', '-tn', 
+                            dest = 'training_dataset_name', 
+                            required = False, 
+                            type = str,
+                            default = argparse.SUPPRESS,
+                            help = textwrap.dedent('''\
+                            Rename the training dataset CSV to be stored in the database.
+                            This will be used to lookup dataset in the database during prediction.
+                            '''))
         self.parser.add_argument('--training_dataset-version', '-tv',
                             dest = 'training_dataset_version',
                             required = False,
@@ -205,6 +209,9 @@ class BCRMatchArgumentParser:
     def get_training_dataset(self):
         return self._training_dataset
     
+    def get_training_dataset_name(self):
+        return self._training_dataset_name
+    
     # def get_training_dataset_name(self, args):
     #     training_dataset_file_path = self.get_training_dataset(args)
     #     training_dataset_name = os.path.basename(training_dataset_file_path)
@@ -232,6 +239,16 @@ class BCRMatchArgumentParser:
     def set_training_dataset(self, args):
         training_dataset = getattr(args, 'training_dataset_csv')
         self._training_dataset = training_dataset
+    
+    def set_training_dataset_name(self, args):
+        try: 
+            training_dataset_name = getattr(args, 'training_dataset_name')
+            self._training_dataset_name = training_dataset_name
+        except:
+            # Set the CSV file name as the default for the training_dataset_name
+            training_dataset_file = self.get_training_dataset()
+            training_dataset_name = os.path.basename(training_dataset_file)
+            self._training_dataset_name = os.path.splitext(training_dataset_name)[0]
 
     def set_training_dataset_version(self, args):
         training_dataset_version = getattr(args, 'training_dataset_version')
@@ -269,3 +286,6 @@ class BCRMatchArgumentParser:
 
             if arg == 'database':
                 self.set_database(args)
+        
+        # This flag needs to be set always.
+        self.set_training_dataset_name(args)
