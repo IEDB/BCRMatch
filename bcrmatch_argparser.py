@@ -83,7 +83,7 @@ class BCRMatchArgumentParser:
                             dest = 'retrain_dataset',
                             required = False,
                             action='store_true',
-                            help = 'Train the classifiers on the provided dataset.')
+                            help = 'Force training if the same dataset name and version exist.')
         self.parser.add_argument('--list-datasets', '-l',
                             dest = 'list_datasets',
                             required = False,
