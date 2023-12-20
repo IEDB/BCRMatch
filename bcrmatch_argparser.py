@@ -30,7 +30,7 @@ class BCRMatchArgumentParser:
                             nargs = '?', 
                             type = argparse.FileType('r'),
                             default = argparse.SUPPRESS,
-                            help = textwrap.dedent('''
+                            help = textwrap.dedent('''\
                                 TSV file containing information about CDRLs and CDRHs.
                                 ex)
                                     Seq_Name    CDRL1    CDRL2    CDRL3    CDRH1    CDRH2    CDRH3
@@ -54,7 +54,10 @@ class BCRMatchArgumentParser:
         self.parser.add_argument('--database', '-db', dest = 'database', required = False,
                             type = str,
                             default = 'dataset-db',
-                            help = 'Path to the database/json created or modified in the training.')
+                            help = textwrap.dedent('''\
+                            Path to the database/json created or modified in the training.
+                            (The 'dataset-db' in the code directory will be used as the default database.)
+                            '''))
         self.parser.add_argument('--training-dataset-csv', '-tc',
                             dest = 'training_dataset_csv',
                             required = False,
@@ -91,7 +94,10 @@ class BCRMatchArgumentParser:
                             type = argparse.FileType('w'),
                             action='store',
                             default = argparse.SUPPRESS,
-                            help = 'Path to the output file.')
+                            help = textwrap.dedent('''\
+                            Path to the output file.
+                            (The default output file is 'output.csv'.)
+                            '''))
 
         # Positional Arguments (User input parameters)
         self.parser.add_argument('inline_seqs', type = str,
