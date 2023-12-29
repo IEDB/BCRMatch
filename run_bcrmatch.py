@@ -39,6 +39,27 @@ def predict(complete_score_dict, classifiers):
 			outfile_writer.writerow(rowline)
 
 
+def get_classifier(dataset_name, version, db):
+	df = pd.read_csv(db, sep='\t')
+	filtered_df = df[(df['dataset_name']==dataset_name) & (df['dataset_version']==version)]	
+	classifier = {}
+
+	for i, row in filtered_df.iterrows():
+		pkl_path = '%s/pickles/%s' %(BASE_DIR, row['pickle_file'])
+		classifier = row['model']
+		print(str(classifier))
+		print(dataset_name)
+
+		# try:
+		# 	with open(pkl_path, 'rb') as f:
+		# 		classifiers[classifier] = pickle.load(f)
+		# except:
+		# 	sys.tracebacklimit = 0
+		# 	raise Exception('Please check if the %s (%s) has been saved in a pickle file.' %(row['model'], row['dataset_version']))
+
+	# return classifiers
+
+
 def get_classifiers(dataset_name, version, db):
 	df = pd.read_csv(db, sep='\t')
 	filtered_df = df[(df['dataset_name']==dataset_name) & (df['dataset_version']==version)]	
@@ -291,6 +312,13 @@ def get_available_datasets(db):
 	return pd.DataFrame(sub_df.size().reset_index(name='count')).drop(columns=['count'])
 
 
+def get_csv_file_path(dataset_name, version, db):
+	df = pd.read_csv(db, sep='\t')
+	filtered_df = df[(df['dataset_name']==dataset_name) & (df['dataset_version']==version)]	
+	
+	return filtered_df['dataset'].iloc[0]
+	
+
 def main():
 	print("Starting program...")
 	bcrmatch_parser = BCRMatchArgumentParser()
@@ -320,24 +348,29 @@ def main():
 	# Get all the sequences into a dictionary
 	sequence_info_dict = bcrmatch_parser.get_sequences(args, parser)
 	# print(sequence_info_dict)
-	training_dataset_file = bcrmatch_parser.get_training_dataset()
-	training_dataset_name = bcrmatch_parser.get_training_dataset_name()
+	# dataset_file = bcrmatch_parser.get_training_dataset()
+	dataset_name = bcrmatch_parser.get_training_dataset_name()
 	dataset_ver = bcrmatch_parser.get_training_dataset_version()
 
 	# lookup dataset file from the database
-	# TODO
+	dataset_file = get_csv_file_path(dataset_name, dataset_ver, db=dataset_db)
 
 	# get training data
-	x_train, y_train = classify_abs.preprocess_ml_dataset(training_dataset_file)
-	# x_train, y_train = get_training_data(training_dataset_file)
+	x_train, y_train = classify_abs.preprocess_ml_dataset(dataset_file)
 
 	print("Retrieving all files containing the TCRMatch result...")
 	tcrout_files = get_tcr_output_files(sequence_info_dict)
 
 	print("Retrieve scores as dictionary...")
 	score_dict = get_scoring_dict_from_csv(tcrout_files)
-	
-	classifiers = get_classifiers(training_dataset_name, dataset_ver, db=dataset_db)
+
+	# classifiers = get_classifier(dataset_name, dataset_ver, db=dataset_db)
+	# exit()
+	classifiers = get_classifiers(dataset_name, dataset_ver, db=dataset_db)
+
+	# print(classifiers)
+	# exit()
+
 
 	print("Writing the final output to CSV...")
 	predict(score_dict, classifiers)
