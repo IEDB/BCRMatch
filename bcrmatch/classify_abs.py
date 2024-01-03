@@ -3,6 +3,7 @@
 import numpy as np
 import pandas as pd
 import xgboost
+import platform
 
 from sklearn.preprocessing import StandardScaler
 
@@ -60,7 +61,10 @@ def XGB(X_train, y_train):
 	return(xgb_classifier)
 
 def FFNN(X_train, y_train):
-	opt = tf.keras.optimizers.SGD(learning_rate=0.001)
+	if platform.processor() == "arm":
+		opt = tf.keras.optimizers.legacy.SGD(learning_rate=0.001)
+	else:
+		opt = tf.keras.optimizers.SGD(learning_rate=0.001)
 	#Initialize the ANN
 	ann = Sequential()
 	#Add input layer and first hidden layer
