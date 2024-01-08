@@ -29,13 +29,13 @@ Follow the steps to run the program through Docker.
 
 ### Running BCRMatch
 Here is an example of how to run BCRMatch:
+```bash
+python run_bcrmatch.py -i ./examples/example.tsv -tn abpairs_abligity
 ```
-python run_bcrmatch.py -i ./examples/example.tsv -tc datasets/abpairs_abligity.csv
-```
-```
+```bash
 python run_bcrmatch.py -ch examples/cdrh1_seqs.fasta examples/cdrh2_seqs.fasta examples/cdrh3_seqs.fasta -cl examples/cdrl1_seqs.fasta examples/cdrl2_seqs.fasta examples/cdrl3_seqs.fasta
 ```
-```
+```bash
 python run_bcrmatch.py -i ./examples/example.tsv -tc datasets/abpairs_abligity.csv -tm
 ```
 
