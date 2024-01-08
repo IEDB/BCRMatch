@@ -27,19 +27,6 @@ Follow the steps to run the program through Docker.
    ```
 
 
-### Running BCRMatch
-Here is an example of how to run BCRMatch prediction mode:
-```bash
-python run_bcrmatch.py -i ./examples/example.tsv -tn abpairs_abligity
-```
-```bash
-python run_bcrmatch.py -ch examples/cdrh1_seqs.fasta examples/cdrh2_seqs.fasta examples/cdrh3_seqs.fasta -cl examples/cdrl1_seqs.fasta examples/cdrl2_seqs.fasta examples/cdrl3_seqs.fasta
-```
-Example of BCRMatch training mode:
-```bash
-python run_bcrmatch.py -i ./examples/example.tsv -tc datasets/abpairs_abligity.csv -tm
-```
-
 #### Running inside the container
 
 All of the command line arguments can be stored in the ```BCRMATCH_ARGS``` environment variable.
@@ -69,15 +56,21 @@ Users can specify dataset that the classifiers can be trained on. If the user pr
 
 > **_NOTE_**<br>
 > Required flags:
-> * `--training_mode`/`-tm`: Sets the program to perform only training.
+> * `--training-mode`/`-tm`: Sets the program to perform only training.
 > * `--training-dataset-csv`/`-tc`: Path to the CSV file that will be used for training.
 >
 > Optional flags:
-> * `--training_dataset-version`/`-tv`:  A version number of the dataset (default=`v1`).
+> * `--training-dataset-version`/`-tv`:  A version number of the dataset (default=`v1`).
 > * `--force-training`/`-f`: Force classifiers to be retrained under the same dataset.
 
 Here is an example on training classifiers with `Abligity` dataset.
+```bash
+python run_bcrmatch.py -tm -tc datasets/abpairs_abligity.csv
 ```
+The record (training dataset file, trained classifiers, etc.) will be stored in the `dataset-db` file with a <i>default version</i> as 1.
+
+To specify versioning for the record, use `-tv`/`--training-dataset-version`
+```bash
 python run_bcrmatch.py -tm -tc datasets/abpairs_abligity.csv -tv v1
 ```
 The above code will save the classifier as a pickle file and save it to `pickles/<dataset_name>/<dataset_version>/<classifier>_<dataset_name>.pkl`.
@@ -97,6 +90,28 @@ python run_bcrmatch.py -tm -tc datasets/abpairs_abligity.csv -tv v1 -f
 ```
 
 ## Prediction
+
+### Run BCRMatch prediction
+Here is an example of how to run BCRMatch prediction mode:
+```bash
+python run_bcrmatch.py -i ./examples/example.tsv -tn abpairs_abligity
+```
+> **_NOTE_**<br>
+> Required flags:
+> * `--input-tsv`/`-i`: TSV file containing information about CDRLs and CDRHs.
+> * `--training-dataset-name`/`-tn`: This will be used to lookup dataset in the database during prediction.
+>
+> Optional flags:
+> * `--input-cdrh`/`-ch`: FASTA file containing CDRH sequence.
+> * `--input-cdrl`/`-cl`: FASTA file containing CDRL sequence.
+> * `--training-dataset-version`/`-tv`:  A version number of the dataset (default=`v1`).
+
+<br>
+
+BCRMatch can also take in individual files (<i>3 CDRH FASTA files</i> and <i>3 CDRL FASTA files</i>) as input stead of a TSV file.
+```bash
+python run_bcrmatch.py -ch examples/cdrh1_seqs.fasta examples/cdrh2_seqs.fasta examples/cdrh3_seqs.fasta -cl examples/cdrl1_seqs.fasta examples/cdrl2_seqs.fasta examples/cdrl3_seqs.fasta -tn abpairs_abligity
+```
 
 
 #### What gets outputted?
