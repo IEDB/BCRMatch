@@ -10,7 +10,7 @@
 > Highly suggest to setup virtual environment with `Python 3.8.10`.
 
 1. Install requirements.
-    ```
+    ```bash
     pip install -r requirements.txt
     ```
 
@@ -18,23 +18,24 @@
 ### Docker
 Follow the steps to run the program through Docker.
 1. Build image form `Dockerfile`:
-    ```
+    ```bash
     docker build -t bcrmatch .
     ```
 2. Run the container with a volume mounted to the current directory:
-   ```
+   ```bash
    docker run -it -v $(pwd):/src/bcrmatch bcrmatch /bin/bash
    ```
 
 
 ### Running BCRMatch
-Here is an example of how to run BCRMatch:
+Here is an example of how to run BCRMatch prediction mode:
 ```bash
 python run_bcrmatch.py -i ./examples/example.tsv -tn abpairs_abligity
 ```
 ```bash
 python run_bcrmatch.py -ch examples/cdrh1_seqs.fasta examples/cdrh2_seqs.fasta examples/cdrh3_seqs.fasta -cl examples/cdrl1_seqs.fasta examples/cdrl2_seqs.fasta examples/cdrl3_seqs.fasta
 ```
+Example of BCRMatch training mode:
 ```bash
 python run_bcrmatch.py -i ./examples/example.tsv -tc datasets/abpairs_abligity.csv -tm
 ```
@@ -45,7 +46,7 @@ All of the command line arguments can be stored in the ```BCRMATCH_ARGS``` envir
 This makes passing parameters that include special characters more consistent across platforms. For
 example:
 
-```
+```bash
 docker run -it -e BCRMATCH_ARGS="-ch examples/cdrh1_seqs.fasta examples/cdrh2_seqs.fasta examples/cdrh3_seqs.fasta -cl examples/cdrl1_seqs.fasta examples/cdrl2_seqs.fasta examples/cdrl3_seqs.fasta" \
 bcrmatch
 ```
@@ -91,7 +92,7 @@ Exception: All models have already been train under the abpairs_abligity (v1) da
 
 However, if classifiers still needs to be updated with the same dataset, use the `--force-training`/`-f` flag.<br>
 This will force the program to retrain the classifiers.
-```
+```bash
 python run_bcrmatch.py -tm -tc datasets/abpairs_abligity.csv -tv v1 -f
 ```
 
@@ -99,4 +100,4 @@ python run_bcrmatch.py -tm -tc datasets/abpairs_abligity.csv -tv v1 -f
 
 
 #### What gets outputted?
-It currently outputs 2 pickled classifiers (`gnb_classifier.pkl`, `rf_classifier.pkl`) and a final output file in CSV.
+It currently outputs a CSV file (<i>default: `output.csv`</i>) that contains prediction data for 5 different models (`RF`, `LR`, `GNB`, `XGB`, and `FFNN`).
