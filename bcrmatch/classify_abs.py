@@ -23,6 +23,10 @@ from tensorflow.keras import regularizers
 
 sc = StandardScaler()
 
+
+def get_standard_scaler():
+	return sc
+
 def preprocess_ml_dataset(dataset):
 	training_dataset = pd.read_csv(dataset)
 	subset_training_dataset = training_dataset.iloc[:,1:7]
@@ -39,6 +43,12 @@ def preprocess_ml_dataset(dataset):
 def preprocess_input_data(myList):
 	input_data = sc.transform(([myList]))
 	return(input_data)
+
+
+def preprocess_input_data(myList, scaler):
+	''' function overloading '''
+	input_data = scaler.transform(([myList]))
+	return (input_data)
 
 def RF(X_train,y_train):
 	rf_classifier = RandomForestClassifier(n_estimators = 100, criterion ='entropy', random_state=0, max_depth = 10)
