@@ -5,15 +5,34 @@ import pickle
 import tempfile
 import ast
 import pandas as pd
+from scipy import stats
 from bcrmatch_argparser import BCRMatchArgumentParser
 from bcrmatch import bcrmatch_functions, classify_abs
 from subprocess import Popen, PIPE
 from pathlib import Path
 
-
 # Absolute path to the TCRMatch program
 TCRMATCH_PATH = os.getenv('TCRMATCH_PATH', '/src/bcrmatch')
 BASE_DIR = Path(__file__).parent.absolute()
+
+
+
+def load_percentile_rank_dataset(classifier):
+	pkl_path = f'./pickles/percentile_ranks/{classifier}.pkl'
+	with open(pkl_path, 'rb') as f:
+		pr_dataset = pickle.load(f)
+	
+	return pr_dataset
+
+def calculate_percentile_rank(classifier, score):
+	'''
+	This function utilizes scipy to caculate percentile rank
+	of the predicted score from the 'percentile_rank_dataset.csv'.
+	'''
+	pr_dataset = load_percentile_rank_dataset(classifier)
+
+	# return the percentile rank
+	return stats.percentileofscore(pr_dataset, score)
 
 
 def predict(complete_score_dict, classifiers, scaler):
@@ -23,28 +42,45 @@ def predict(complete_score_dict, classifiers, scaler):
 
 	with open("output.csv", "w", newline='') as csvfile:
 		outfile_writer = csv.writer(csvfile, delimiter=',')
-		outfile_writer.writerow(["Antibody pair", "RF Prediction", "LR Prediction",
-		                        "GNB Prediction", "XGB Prediction", "FFNN Prediction"])
+
+		# Set column names
+		outfile_writer.writerow([
+			"Antibody pair", 
+			"RF Prediction", 
+			"RF Percentile Rank",
+			"LR Prediction",
+			"LR Percentile Rank",
+			"GNB Prediction", 
+			"GNB Percentile Rank",
+			"XGB Prediction", 
+			"XGB Percentile Rank",
+			"FFNN Prediction",
+			"FFNN Percentile Rank",
+			])
+
 		for ab_pair in complete_score_dict.keys():
 			rowline = []
 			rowline.append(ab_pair)
 
 			# input_data = classify_abs.preprocess_input_data([0.98,1,1,1,1,0.98])
-			# input_data = classify_abs.preprocess_input_data(complete_score_dict[ab_pair])
-
 			input_data = classify_abs.preprocess_input_data(
 				complete_score_dict[ab_pair], scaler)
-
-
 
 			for classifier_name, classifier_obj in classifiers.items():
 				if classifier_name == 'ffnn':
 					output = classifier_obj.predict(input_data)
-					rowline.append(output[0][0])
+					score = output[0][0]
 				else:
 					output = classifier_obj.predict_proba(input_data)[:, 1]
-					rowline.append(output[0])
+					score = output[0]
 				
+				# calculate percentile rank
+				percentile_rank = calculate_percentile_rank(classifier_name, score)
+
+				# add score and percentile rank
+				rowline.append(score)
+				rowline.append(percentile_rank)
+	
 			outfile_writer.writerow(rowline)
 
 
