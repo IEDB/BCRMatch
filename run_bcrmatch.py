@@ -3,61 +3,85 @@ import sys
 import csv
 import pickle
 import tempfile
+import ast
 import pandas as pd
+from scipy import stats
 from bcrmatch_argparser import BCRMatchArgumentParser
 from bcrmatch import bcrmatch_functions, classify_abs
 from subprocess import Popen, PIPE
 from pathlib import Path
-
 
 # Absolute path to the TCRMatch program
 TCRMATCH_PATH = os.getenv('TCRMATCH_PATH', '/src/bcrmatch')
 BASE_DIR = Path(__file__).parent.absolute()
 
 
-def predict(complete_score_dict, classifiers):
+
+def load_percentile_rank_dataset(classifier):
+	pkl_path = f'./pickles/percentile_ranks/{classifier}.pkl'
+	with open(pkl_path, 'rb') as f:
+		pr_dataset = pickle.load(f)
+	
+	return pr_dataset
+
+def calculate_percentile_rank(classifier, score):
+	'''
+	This function utilizes scipy to caculate percentile rank
+	of the predicted score from the 'percentile_rank_dataset.csv'.
+	'''
+	pr_dataset = load_percentile_rank_dataset(classifier)
+
+	# return the percentile rank
+	return stats.percentileofscore(pr_dataset, score)
+
+
+def predict(complete_score_dict, classifiers, scaler):
+	# convert scaler string back to StandardScaler obj.
+	scaler = ast.literal_eval(scaler)
+	scaler = pickle.loads(scaler)
+
 	with open("output.csv", "w", newline='') as csvfile:
 		outfile_writer = csv.writer(csvfile, delimiter=',')
-		outfile_writer.writerow(["Antibody pair", "RF Prediction", "LR Prediction",
-		                        "GNB Prediction", "XGB Prediction", "FFNN Prediction"])
+
+		# Set column names
+		outfile_writer.writerow([
+			"Antibody pair", 
+			"RF Prediction", 
+			"RF Percentile Rank",
+			"LR Prediction",
+			"LR Percentile Rank",
+			"GNB Prediction", 
+			"GNB Percentile Rank",
+			"XGB Prediction", 
+			"XGB Percentile Rank",
+			"FFNN Prediction",
+			"FFNN Percentile Rank",
+			])
+
 		for ab_pair in complete_score_dict.keys():
 			rowline = []
 			rowline.append(ab_pair)
 
 			# input_data = classify_abs.preprocess_input_data([0.98,1,1,1,1,0.98])
-			input_data = classify_abs.preprocess_input_data(complete_score_dict[ab_pair])
-
+			input_data = classify_abs.preprocess_input_data(
+				complete_score_dict[ab_pair], scaler)
 
 			for classifier_name, classifier_obj in classifiers.items():
 				if classifier_name == 'ffnn':
 					output = classifier_obj.predict(input_data)
-					rowline.append(output[0][0])
+					score = output[0][0]
 				else:
 					output = classifier_obj.predict_proba(input_data)[:, 1]
-					rowline.append(output[0])
+					score = output[0]
 				
+				# calculate percentile rank
+				percentile_rank = calculate_percentile_rank(classifier_name, score)
+
+				# add score and percentile rank
+				rowline.append(score)
+				rowline.append(percentile_rank)
+	
 			outfile_writer.writerow(rowline)
-
-
-def get_classifier(dataset_name, version, db):
-	df = pd.read_csv(db, sep='\t')
-	filtered_df = df[(df['dataset_name']==dataset_name) & (df['dataset_version']==version)]	
-	classifier = {}
-
-	for i, row in filtered_df.iterrows():
-		pkl_path = '%s/pickles/%s' %(BASE_DIR, row['pickle_file'])
-		classifier = row['model']
-		print(str(classifier))
-		print(dataset_name)
-
-		# try:
-		# 	with open(pkl_path, 'rb') as f:
-		# 		classifiers[classifier] = pickle.load(f)
-		# except:
-		# 	sys.tracebacklimit = 0
-		# 	raise Exception('Please check if the %s (%s) has been saved in a pickle file.' %(row['model'], row['dataset_version']))
-
-	# return classifiers
 
 
 def get_classifiers(dataset_name, version, db):
@@ -233,20 +257,25 @@ def get_tcr_output_files(tsv_content) :
 	return tcrout_filenames
 
 
-def update_db_content(parser, name, dataset, version):
+def update_db_content(parser, name, dataset, version, scaler):
 	dataset_db_header = [
 		'dataset_name',
 		'model',
 		'dataset',
 		'pickle_file',
-		'dataset_version'
+		'dataset_version',
+		'scaler'
 	]
+
+	# pickle standard scaler
+	pickled_scaler = pickle.dumps(scaler)
 
 	# Create 5 dataset entry for all 5 models
 	data = []
 	for model in parser.MODELS:
 		pickle_file_path = '%s/%s/%s_%s.pkl' %(name, version, model, name)
-		data.append([name, model, dataset, pickle_file_path, version])
+		data.append(
+			[name, model, dataset, pickle_file_path, version, pickled_scaler])
 	
 	return pd.DataFrame(data, columns=dataset_db_header)
 
@@ -288,7 +317,9 @@ def start_training_mode(parser):
 		classifiers = train_models(training_dataset_file)
 		save_classifiers(training_dataset_name, training_dataset_version, classifiers)
 		# entry doesn't exists, thus add to db		
-		df2 = update_db_content(parser, training_dataset_name, training_dataset_file, training_dataset_version)
+		scaler = classify_abs.get_standard_scaler()
+		df2 = update_db_content(parser, training_dataset_name,
+		                        training_dataset_file, training_dataset_version, scaler)
 
 		# Append the data to the existing db
 		df = pd.concat([df, df2])
@@ -296,7 +327,9 @@ def start_training_mode(parser):
 	else:
 		classifiers = train_models(training_dataset_file)
 		save_classifiers(training_dataset_name, training_dataset_version, classifiers)
-		df = update_db_content(parser, training_dataset_name, training_dataset_file, training_dataset_version)
+		scaler = classify_abs.get_standard_scaler()
+		df = update_db_content(parser, training_dataset_name,
+		                       training_dataset_file, training_dataset_version, scaler)
 	
 	df.sort_values(['dataset_name', 'dataset_version'], ascending=[True, True], inplace=True)
 
@@ -318,6 +351,14 @@ def get_csv_file_path(dataset_name, version, db):
 	
 	return filtered_df['dataset'].iloc[0]
 	
+
+def get_standard_scaler(dataset_name, version, db):
+	df = pd.read_csv(db, sep='\t')
+	filtered_df = df[(df['dataset_name'] == dataset_name)
+                  & (df['dataset_version'] == version)]
+
+	# returns a string format of the standard scaler
+	return filtered_df['scaler'].iloc[0]
 
 def main():
 	print("Starting program...")
@@ -352,11 +393,9 @@ def main():
 	dataset_name = bcrmatch_parser.get_training_dataset_name()
 	dataset_ver = bcrmatch_parser.get_training_dataset_version()
 
-	# lookup dataset file from the database
-	dataset_file = get_csv_file_path(dataset_name, dataset_ver, db=dataset_db)
+	# Get scaler that was pre-fitted to the training dataset through dataset_name
+	scaler = get_standard_scaler(dataset_name, dataset_ver, db=dataset_db)
 
-	# get training data
-	x_train, y_train = classify_abs.preprocess_ml_dataset(dataset_file)
 
 	print("Retrieving all files containing the TCRMatch result...")
 	tcrout_files = get_tcr_output_files(sequence_info_dict)
@@ -364,16 +403,10 @@ def main():
 	print("Retrieve scores as dictionary...")
 	score_dict = get_scoring_dict_from_csv(tcrout_files)
 
-	# classifiers = get_classifier(dataset_name, dataset_ver, db=dataset_db)
-	# exit()
 	classifiers = get_classifiers(dataset_name, dataset_ver, db=dataset_db)
 
-	# print(classifiers)
-	# exit()
-
-
 	print("Writing the final output to CSV...")
-	predict(score_dict, classifiers)
+	predict(score_dict, classifiers, scaler)
 
 	print("Completed!")
 
