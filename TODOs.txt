@@ -1,0 +1,9 @@
+TODOs:
+
+* remove datasets from repo
+* create datsets.tgz on downloads server
+* create models.tgz on downloads server
+  * the models.tgz should include the database-db the script below should download this to the appropriate directory
+* create script to pull datasets / models from downloads server and have Dockerfile execute it
+* remove classify_abs from imports until needed for training
+* update README
