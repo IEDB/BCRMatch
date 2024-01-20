@@ -32,4 +32,6 @@ RUN pip install -r requirements.txt
 
 COPY . .
 
+RUN bash download-latest-models.sh
+
 CMD ["sh", "-c", "python3 run_bcrmatch.py ${BCRMATCH_ARGS}"]
