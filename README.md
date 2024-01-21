@@ -4,21 +4,29 @@ BCRMatch is a tool that accepts sequences of CDR loops of antibodies (with and w
 
 ## Installation
 
-### Docker (recommended)
+There are 3 methods of installation, listed in order of our recommendation.
 
-Follow these steps to run the program using Docker.
+### Prebuilt docker image (highly recommended)
 
-1. Build image from `Dockerfile`:
+Pull the image from our public registry and tag it locally as 'bcrmatch':
+    ```bash
+    docker pull harbor.lji.org/iedb-public/bcrmatch:latest
+    docker tag harbor.lji.org/iedb-public/bcrmatch:latest bcrmatch
+    ```
+Now you can run commands using the ```bcrmatch``` container image as described below.
+
+### Docker build (recommended)
+
+To build animage from `Dockerfile`:
     ```bash
     docker build -t bcrmatch .
     ```
-2. Run the container with a volume mounted to the current directory:
-   ```bash
-   docker run -it -v $(pwd):/src/bcrmatch bcrmatch /bin/bash
-   ```
+
+Now you can run commands using the ```bcrmatch``` container image as described below.
 
 **NOTE**: On ARM-based systems (e.g., Mac M1/M2/M3), you may also need to pass the ```--platform=linux/amd64``` command line
-switch to every Docker command.
+switch to every Docker command.  Although it seems to build properly on some ARM machines, the tensorflow libraries may
+cause issues and the image may be unusable.
 
 ### Local installation
 
