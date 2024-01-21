@@ -1,7 +1,6 @@
 TODOs:
 
 * remove datasets from repoit
-* remove classify_abs from imports until needed for training
 * update README
 
 DONE:
