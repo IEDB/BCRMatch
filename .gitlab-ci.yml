@@ -10,8 +10,9 @@ build_container:
   variables:
     DOCKER_IMG: harbor.lji.org/iedb-public/bcrmatch:$CI_COMMIT_TAG
   script:
+    - docker logout $DOCKER_IMG
     - docker login -u $HARBOR_USER -p $HARBOR_PWD $DOCKER_IMG
-    - docker build -t $DOCKER_IMG
+    - docker build -t $DOCKER_IMG .
     - docker push $DOCKER_IMG
   rules:
     # run this only for tags
