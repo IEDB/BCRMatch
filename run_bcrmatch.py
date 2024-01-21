@@ -305,15 +305,13 @@ def start_training_mode(parser):
 			# If force flag is set, retrain
 			if force_retrain:
 				print('Force Retraining -- call train_model()')
-				classifiers = train_models(training_dataset_file)
-				save_classifiers(training_dataset_name, training_dataset_version, classifiers)
 				df = residue_df
 
 			else:
 				# Do not print tracebacks
 				sys.tracebacklimit = 0
 				raise Exception('All models have already been train under the %s (%s) dataset.' %(training_dataset_name, training_dataset_version))
-		
+
 		classifiers = train_models(training_dataset_file)
 		save_classifiers(training_dataset_name, training_dataset_version, classifiers)
 		# entry doesn't exists, thus add to db		
