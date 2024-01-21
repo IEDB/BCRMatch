@@ -129,3 +129,8 @@ docker run \
 -e BCRMATCH_ARGS="-ch examples/cdrh1_seqs.fasta examples/cdrh2_seqs.fasta examples/cdrh3_seqs.fasta -cl examples/cdrl1_seqs.fasta examples/cdrl2_seqs.fasta examples/cdrl3_seqs.fasta" \
 bcrmatch
 ```
+
+## Development notes
+
+Gitlab CI will build container images for all tags and push them to harbor.  They will need to be manually tagged with
+```latest```.
