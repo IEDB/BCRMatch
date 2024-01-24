@@ -330,7 +330,7 @@ def start_training_mode(parser):
 		
 	else:
 		df = update_db_content(parser, training_dataset_name,
-		                       training_dataset_file, training_dataset_version, scaler)
+		                       training_dataset_file, training_dataset_version)
 	
 	df.sort_values(['dataset_name', 'dataset_version'], ascending=[True, True], inplace=True)
 
