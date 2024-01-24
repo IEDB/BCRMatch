@@ -37,8 +37,8 @@ def calculate_percentile_rank(classifier, score):
 
 def predict(complete_score_dict, classifiers, scaler):
 	# convert scaler string back to StandardScaler obj.
-	scaler = ast.literal_eval(scaler)
-	scaler = pickle.loads(scaler)
+	# scaler = ast.literal_eval(scaler)
+	# scaler = pickle.loads(scaler)
 
 	with open("output.csv", "w", newline='') as csvfile:
 		outfile_writer = csv.writer(csvfile, delimiter=',')
@@ -359,13 +359,21 @@ def get_csv_file_path(dataset_name, version, db):
 	return filtered_df['dataset'].iloc[0]
 	
 
-def get_standard_scaler(dataset_name, version, db):
-	df = pd.read_csv(db, sep='\t')
-	filtered_df = df[(df['dataset_name'] == dataset_name)
-                  & (df['dataset_version'] == version)]
+def get_standard_scaler(dataset, version):
+	# Create directories recursively even if they don't exists
+	base_path = '%s/pickles/%s/%s' %(BASE_DIR, dataset, version)
+	path = Path(base_path)
+	path.mkdir(parents=True, exist_ok=True)
 
-	# returns a string format of the standard scaler
-	return filtered_df['scaler'].iloc[0]
+	pkl_file_name = 'scaler.pkl'
+	pkl_file_path = '%s/%s' %(base_path, pkl_file_name)
+
+	scaler = None
+	with open(pkl_file_path, 'rb') as f:
+		scaler = pickle.load(f)
+	
+	return scaler
+
 
 def main():
 	print("Starting program...")
@@ -401,8 +409,10 @@ def main():
 	dataset_ver = bcrmatch_parser.get_training_dataset_version()
 
 	# Get scaler that was pre-fitted to the training dataset through dataset_name
-	scaler = get_standard_scaler(dataset_name, dataset_ver, db=dataset_db)
-
+	scaler = get_standard_scaler(dataset_name, dataset_ver)
+	print(scaler)
+	print(type(scaler))
+	# exit()
 
 	print("Retrieving all files containing the TCRMatch result...")
 	tcrout_files = get_tcr_output_files(sequence_info_dict)
