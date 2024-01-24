@@ -38,6 +38,7 @@ def preprocess_ml_dataset(dataset):
 	#X_train, X_test_1, y_train, y_test_1 = train_test_split(X, y, test_size = 0.25, random_state = 0, stratify = y )
 	
 	X[:, :] = sc.fit_transform(X[:, :])
+	print('StandardScaler is being fitted by the dataset.')
 	return(X, y)
 
 def preprocess_input_data(myList):

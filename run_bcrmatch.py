@@ -102,6 +102,15 @@ def get_classifiers(dataset_name, version, db):
 
 	return classifiers
 
+def save_scaler(dataset, version, scaler):
+	print("Pickling scaler object...")
+	base_path = '%s/pickles/%s/%s' %(BASE_DIR, dataset, version)
+	path = Path(base_path)
+	pkl_file_path = '%s/scaler.pkl' %(base_path)
+
+	with open(pkl_file_path, 'wb') as f:
+		pickle.dump(scaler, f)
+
 
 def save_classifiers(dataset, version, classifiers):
 	# Saves classifers into pickle files
@@ -257,25 +266,25 @@ def get_tcr_output_files(tsv_content) :
 	return tcrout_filenames
 
 
-def update_db_content(parser, name, dataset, version, scaler):
+def update_db_content(parser, name, dataset, version):
 	dataset_db_header = [
 		'dataset_name',
 		'model',
 		'dataset',
 		'pickle_file',
 		'dataset_version',
-		'scaler'
+		# 'scaler'
 	]
 
 	# pickle standard scaler
-	pickled_scaler = pickle.dumps(scaler)
+	# pickled_scaler = pickle.dumps(scaler)
 
 	# Create 5 dataset entry for all 5 models
 	data = []
 	for model in parser.MODELS:
 		pickle_file_path = '%s/%s/%s_%s.pkl' %(name, version, model, name)
 		data.append(
-			[name, model, dataset, pickle_file_path, version, pickled_scaler])
+			[name, model, dataset, pickle_file_path, version])
 	
 	return pd.DataFrame(data, columns=dataset_db_header)
 
@@ -312,20 +321,14 @@ def start_training_mode(parser):
 				sys.tracebacklimit = 0
 				raise Exception('All models have already been train under the %s (%s) dataset.' %(training_dataset_name, training_dataset_version))
 
-		classifiers = train_models(training_dataset_file)
-		save_classifiers(training_dataset_name, training_dataset_version, classifiers)
 		# entry doesn't exists, thus add to db		
-		scaler = classify_abs.get_standard_scaler()
 		df2 = update_db_content(parser, training_dataset_name,
-		                        training_dataset_file, training_dataset_version, scaler)
+		                        training_dataset_file, training_dataset_version)
 
 		# Append the data to the existing db
 		df = pd.concat([df, df2])
 		
 	else:
-		classifiers = train_models(training_dataset_file)
-		save_classifiers(training_dataset_name, training_dataset_version, classifiers)
-		scaler = classify_abs.get_standard_scaler()
 		df = update_db_content(parser, training_dataset_name,
 		                       training_dataset_file, training_dataset_version, scaler)
 	
@@ -333,6 +336,12 @@ def start_training_mode(parser):
 
 	# create dataset db
 	df.to_csv(database_db, sep='\t', index=False)
+	
+	# Train classifiers and fit scaler to the datset + save
+	classifiers = train_models(training_dataset_file)
+	scaler = classify_abs.get_standard_scaler()
+	save_classifiers(training_dataset_name, training_dataset_version, classifiers)
+	save_scaler(training_dataset_name, training_dataset_version, scaler)
 
 
 def get_available_datasets(db):
