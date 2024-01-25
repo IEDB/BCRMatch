@@ -3,7 +3,6 @@ import sys
 import csv
 import pickle
 import tempfile
-import ast
 import pandas as pd
 from scipy import stats
 from bcrmatch_argparser import BCRMatchArgumentParser
@@ -270,11 +269,7 @@ def update_db_content(parser, name, dataset, version):
 		'dataset',
 		'pickle_file',
 		'dataset_version',
-		# 'scaler'
 	]
-
-	# pickle standard scaler
-	# pickled_scaler = pickle.dumps(scaler)
 
 	# Create 5 dataset entry for all 5 models
 	data = []
