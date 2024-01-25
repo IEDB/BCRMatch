@@ -36,9 +36,6 @@ def calculate_percentile_rank(classifier, score):
 
 
 def predict(complete_score_dict, classifiers, scaler):
-	# convert scaler string back to StandardScaler obj.
-	# scaler = ast.literal_eval(scaler)
-	# scaler = pickle.loads(scaler)
 
 	with open("output.csv", "w", newline='') as csvfile:
 		outfile_writer = csv.writer(csvfile, delimiter=',')
@@ -403,17 +400,12 @@ def main():
 
 	# Get all the sequences into a dictionary
 	sequence_info_dict = bcrmatch_parser.get_sequences(args, parser)
-	# print(sequence_info_dict)
-	# dataset_file = bcrmatch_parser.get_training_dataset()
 	dataset_name = bcrmatch_parser.get_training_dataset_name()
 	dataset_ver = bcrmatch_parser.get_training_dataset_version()
 
 	# Get scaler that was pre-fitted to the training dataset through dataset_name
 	scaler = get_standard_scaler(dataset_name, dataset_ver)
-	print(scaler)
-	print(type(scaler))
-	# exit()
-
+	
 	print("Retrieving all files containing the TCRMatch result...")
 	tcrout_files = get_tcr_output_files(sequence_info_dict)
 
