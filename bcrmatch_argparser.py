@@ -76,7 +76,7 @@ class BCRMatchArgumentParser:
                             dest = 'training_dataset_version',
                             required = False,
                             type = str,
-                            default = 'v1',
+                            default = '20240125',
                             help = 'A version number of the dataset.')
         self.parser.add_argument('--training-mode', '-tm',
                             dest = 'training_mode',
@@ -266,6 +266,10 @@ class BCRMatchArgumentParser:
         db_path = getattr(args, 'database')
         self._dataset_db = db_path
         
+    def validate_for_list(self, args):
+        """Minimal validation needed when the --list-datesets option is specified"""
+        self.set_list_datasets(args)
+        self.set_database(args)
 
     def validate(self, args):
         for arg in vars(args):

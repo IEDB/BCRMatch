@@ -372,16 +372,17 @@ def main():
 	bcrmatch_parser = BCRMatchArgumentParser()
 	args, parser = bcrmatch_parser.parse_args(sys.argv[1:])
 
-	# Basic validation and prep on all the params(flags)
-	bcrmatch_parser.validate(args)
-
-	dataset_db = bcrmatch_parser.get_database()
-
-	if bcrmatch_parser.get_list_datasets_flag():
+	if args.list_datasets:
+		# minimal validation for listing of datasets
+		bcrmatch_parser.validate_for_list(args)
+		dataset_db = bcrmatch_parser.get_database()
 		dataset_df = get_available_datasets(dataset_db)
 		print(dataset_df.to_string(index=False))
 		sys.exit(0)
-	
+
+	# Basic validation and prep on all the params(flags)
+	bcrmatch_parser.validate(args)
+	dataset_db = bcrmatch_parser.get_database()
 
 	# Check training mode
 	if bcrmatch_parser.get_training_mode():
