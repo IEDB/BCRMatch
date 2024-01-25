@@ -17,7 +17,7 @@ Now you can run commands using the ```bcrmatch``` container image as described b
 
 ### Docker build (recommended)
 
-To build animage from `Dockerfile`:
+To build an image from `Dockerfile`:
     ```bash
     docker build -t bcrmatch .
     ```

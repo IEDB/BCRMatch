@@ -1,6 +1,6 @@
 TODOs:
-
-* remove datasets from repoit
+* regenerate models.tgz, test, and move to downlaods server
+* remove datasets from repository
 * update README
 
 DONE:
