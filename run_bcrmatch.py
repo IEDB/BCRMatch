@@ -3,7 +3,6 @@ import sys
 import csv
 import pickle
 import tempfile
-import ast
 import pandas as pd
 from scipy import stats
 from bcrmatch_argparser import BCRMatchArgumentParser
@@ -36,9 +35,6 @@ def calculate_percentile_rank(classifier, score):
 
 
 def predict(complete_score_dict, classifiers, scaler):
-	# convert scaler string back to StandardScaler obj.
-	scaler = ast.literal_eval(scaler)
-	scaler = pickle.loads(scaler)
 
 	with open("output.csv", "w", newline='') as csvfile:
 		outfile_writer = csv.writer(csvfile, delimiter=',')
@@ -101,6 +97,15 @@ def get_classifiers(dataset_name, version, db):
 			raise Exception('Please check if the %s (%s) has been saved in a pickle file.' %(row['model'], row['dataset_version']))
 
 	return classifiers
+
+def save_scaler(dataset, version, scaler):
+	print("Pickling scaler object...")
+	base_path = '%s/pickles/%s/%s' %(BASE_DIR, dataset, version)
+	path = Path(base_path)
+	pkl_file_path = '%s/scaler.pkl' %(base_path)
+
+	with open(pkl_file_path, 'wb') as f:
+		pickle.dump(scaler, f)
 
 
 def save_classifiers(dataset, version, classifiers):
@@ -257,25 +262,21 @@ def get_tcr_output_files(tsv_content) :
 	return tcrout_filenames
 
 
-def update_db_content(parser, name, dataset, version, scaler):
+def update_db_content(parser, name, dataset, version):
 	dataset_db_header = [
 		'dataset_name',
 		'model',
 		'dataset',
 		'pickle_file',
 		'dataset_version',
-		'scaler'
 	]
-
-	# pickle standard scaler
-	pickled_scaler = pickle.dumps(scaler)
 
 	# Create 5 dataset entry for all 5 models
 	data = []
 	for model in parser.MODELS:
 		pickle_file_path = '%s/%s/%s_%s.pkl' %(name, version, model, name)
 		data.append(
-			[name, model, dataset, pickle_file_path, version, pickled_scaler])
+			[name, model, dataset, pickle_file_path, version])
 	
 	return pd.DataFrame(data, columns=dataset_db_header)
 
@@ -305,36 +306,34 @@ def start_training_mode(parser):
 			# If force flag is set, retrain
 			if force_retrain:
 				print('Force Retraining -- call train_model()')
-				classifiers = train_models(training_dataset_file)
-				save_classifiers(training_dataset_name, training_dataset_version, classifiers)
 				df = residue_df
 
 			else:
 				# Do not print tracebacks
 				sys.tracebacklimit = 0
 				raise Exception('All models have already been train under the %s (%s) dataset.' %(training_dataset_name, training_dataset_version))
-		
-		classifiers = train_models(training_dataset_file)
-		save_classifiers(training_dataset_name, training_dataset_version, classifiers)
+
 		# entry doesn't exists, thus add to db		
-		scaler = classify_abs.get_standard_scaler()
 		df2 = update_db_content(parser, training_dataset_name,
-		                        training_dataset_file, training_dataset_version, scaler)
+		                        training_dataset_file, training_dataset_version)
 
 		# Append the data to the existing db
 		df = pd.concat([df, df2])
 		
 	else:
-		classifiers = train_models(training_dataset_file)
-		save_classifiers(training_dataset_name, training_dataset_version, classifiers)
-		scaler = classify_abs.get_standard_scaler()
 		df = update_db_content(parser, training_dataset_name,
-		                       training_dataset_file, training_dataset_version, scaler)
+		                       training_dataset_file, training_dataset_version)
 	
 	df.sort_values(['dataset_name', 'dataset_version'], ascending=[True, True], inplace=True)
 
 	# create dataset db
 	df.to_csv(database_db, sep='\t', index=False)
+	
+	# Train classifiers and fit scaler to the datset + save
+	classifiers = train_models(training_dataset_file)
+	scaler = classify_abs.get_standard_scaler()
+	save_classifiers(training_dataset_name, training_dataset_version, classifiers)
+	save_scaler(training_dataset_name, training_dataset_version, scaler)
 
 
 def get_available_datasets(db):
@@ -352,13 +351,21 @@ def get_csv_file_path(dataset_name, version, db):
 	return filtered_df['dataset'].iloc[0]
 	
 
-def get_standard_scaler(dataset_name, version, db):
-	df = pd.read_csv(db, sep='\t')
-	filtered_df = df[(df['dataset_name'] == dataset_name)
-                  & (df['dataset_version'] == version)]
+def get_standard_scaler(dataset, version):
+	# Create directories recursively even if they don't exists
+	base_path = '%s/pickles/%s/%s' %(BASE_DIR, dataset, version)
+	path = Path(base_path)
+	path.mkdir(parents=True, exist_ok=True)
 
-	# returns a string format of the standard scaler
-	return filtered_df['scaler'].iloc[0]
+	pkl_file_name = 'scaler.pkl'
+	pkl_file_path = '%s/%s' %(base_path, pkl_file_name)
+
+	scaler = None
+	with open(pkl_file_path, 'rb') as f:
+		scaler = pickle.load(f)
+	
+	return scaler
+
 
 def main():
 	print("Starting program...")
@@ -388,15 +395,12 @@ def main():
 
 	# Get all the sequences into a dictionary
 	sequence_info_dict = bcrmatch_parser.get_sequences(args, parser)
-	# print(sequence_info_dict)
-	# dataset_file = bcrmatch_parser.get_training_dataset()
 	dataset_name = bcrmatch_parser.get_training_dataset_name()
 	dataset_ver = bcrmatch_parser.get_training_dataset_version()
 
 	# Get scaler that was pre-fitted to the training dataset through dataset_name
-	scaler = get_standard_scaler(dataset_name, dataset_ver, db=dataset_db)
-
-
+	scaler = get_standard_scaler(dataset_name, dataset_ver)
+	
 	print("Retrieving all files containing the TCRMatch result...")
 	tcrout_files = get_tcr_output_files(sequence_info_dict)
 
