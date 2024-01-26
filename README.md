@@ -9,18 +9,20 @@ There are 3 methods of installation, listed in order of our recommendation.
 ### Prebuilt docker image (highly recommended)
 
 Pull the image from our public registry and tag it locally as 'bcrmatch':
-    ```bash
-    docker pull harbor.lji.org/iedb-public/bcrmatch:latest
-    docker tag harbor.lji.org/iedb-public/bcrmatch:latest bcrmatch
-    ```
+
+```bash
+docker pull harbor.lji.org/iedb-public/bcrmatch:latest
+docker tag harbor.lji.org/iedb-public/bcrmatch:latest bcrmatch
+```
 Now you can run commands using the ```bcrmatch``` container image as described below.
 
 ### Docker build (recommended)
 
 To build an image from `Dockerfile`:
-    ```bash
-    docker build -t bcrmatch .
-    ```
+
+```bash
+docker build -t bcrmatch .
+```
 
 Now you can run commands using the ```bcrmatch``` container image as described below.
 
