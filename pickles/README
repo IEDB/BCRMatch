@@ -1,0 +1,2 @@
+This folder should stay empty in the repository.
+When run_bcrmatch program is executed, various pickle files will get created in this directory.

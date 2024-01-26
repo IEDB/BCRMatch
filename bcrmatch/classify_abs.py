@@ -1,15 +1,19 @@
 #!/usr/bin/env python
 
 import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
 import xgboost
+import platform
 
 from sklearn.preprocessing import StandardScaler
 
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB
+
+import os
+# Ignore tensorflow's CUDA warning messages
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
@@ -18,6 +22,10 @@ from tensorflow.keras.layers import Dropout
 from tensorflow.keras import regularizers
 
 sc = StandardScaler()
+
+
+def get_standard_scaler():
+	return sc
 
 def preprocess_ml_dataset(dataset):
 	training_dataset = pd.read_csv(dataset)
@@ -30,11 +38,18 @@ def preprocess_ml_dataset(dataset):
 	#X_train, X_test_1, y_train, y_test_1 = train_test_split(X, y, test_size = 0.25, random_state = 0, stratify = y )
 	
 	X[:, :] = sc.fit_transform(X[:, :])
+	print('StandardScaler is being fitted by the dataset.')
 	return(X, y)
 
 def preprocess_input_data(myList):
 	input_data = sc.transform(([myList]))
 	return(input_data)
+
+
+def preprocess_input_data(myList, scaler):
+	''' function overloading '''
+	input_data = scaler.transform(([myList]))
+	return (input_data)
 
 def RF(X_train,y_train):
 	rf_classifier = RandomForestClassifier(n_estimators = 100, criterion ='entropy', random_state=0, max_depth = 10)
@@ -57,7 +72,10 @@ def XGB(X_train, y_train):
 	return(xgb_classifier)
 
 def FFNN(X_train, y_train):
-	opt = tf.keras.optimizers.SGD(learning_rate=0.001)
+	if platform.processor() == "arm":
+		opt = tf.keras.optimizers.legacy.SGD(learning_rate=0.001)
+	else:
+		opt = tf.keras.optimizers.SGD(learning_rate=0.001)
 	#Initialize the ANN
 	ann = Sequential()
 	#Add input layer and first hidden layer
@@ -74,6 +92,3 @@ def FFNN(X_train, y_train):
 	ann.compile(optimizer = opt, loss= 'binary_crossentropy' ,metrics = [tf.keras.metrics.AUC()])
 	ann.fit(X_train, y_train, batch_size = 128, epochs = 70)
 	return(ann)
-
-
-
