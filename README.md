@@ -52,13 +52,13 @@ export TCRMATCH_PATH=/path/to/tcrmatch_dir
 
 3. Download pre-trained datasets (optional, but recommended)
 
-@hkim this should be a simple script that uses curl/wget to pull files from the downloads server
-
-Run the script ```dataset-download.sh``` to download the most up-to-date pre-trained datasets from the IEDB servers:
+Run the script ```download-latest-models.sh``` to download the most up-to-date pre-trained datasets from the IEDB servers:
 
 ```bash
-sh dataset-download.sh
+sh download-latest-model.sh
 ```
+
+**NOTE:** This is a very rudimentary script that *MUST* be run from inside the BCRMatch directory.  *This script will overwrite any existing ```dataset-db``` file and model files inside the ```pickles``` directory.
 
 ## Usage
 
