@@ -66,15 +66,82 @@ from outside of the container are in the section "`Running outside fo the contai
 
 ### Prediction
 
-@hkim please fill this in
+**List available datsets**
+
+```
+$ python run_bcrmatch.py --list-datasets
+Starting program...
+    dataset_name  dataset_version
+abpairs_abligity         20240125
+    abpairs_iedb         20240125
+```
+
+**Predict using the abpairs_abligity dataset with TSV inputs**
+
+```
+$ python run_bcrmatch.py -tn abpairs_abligity -i examples/example.tsv 
+Starting program...
+Retrieving all files containing the TCRMatch result...
+Retrieve scores as dictionary...
+Writing the final output to CSV...
+Completed!
+```
+
+Output is saved to ```output.csv``` by default, but can be redirected by passing the ```-o``` option.
+
+**Predict using the abpairs_iedb model with FASTA inputs**
+
+```
+$ python run_bcrmatch.py \
+-tn abpairs_iedb \
+-ch examples/cdrh1_seqs.fasta examples/cdrh2_seqs.fasta examples/cdrh3_seqs.fasta \
+-cl examples/cdrl1_seqs.fasta examples/cdrl2_seqs.fasta examples/cdrl3_seqs.fasta 
+Starting program...
+Retrieving all files containing the TCRMatch result...
+Retrieve scores as dictionary...
+Writing the final output to CSV...
+Completed!
+```
 
 #### Input format
 
-@hkim please fill this in
+Input can be provided in either TSV format with 1 row per antibody or 6 paired fasta files.
+
+**TSV input format**
+
+A TSV with the following format is accepted with the ```-i``` option:
+
+```
+Seq_Name        CDRL1   CDRL2   CDRL3   CDRH1   CDRH2   CDRH3
+1       NNIGSKS DDS     WDSSSDHA        GFTFDDY SWNTGT  RSYVVAAEYYFH
+2       SQDISNY YTS     DFTLPF  GYTFTNY YPGNGD  GGSYRYDGGFD
+3       ASGNIHN YYT     HFWSTPR GFSLTGY WGDGN   RDYRLD
+4       SESVDNYGISF     AAS     SKEVPL  GYTFTSS HPNSGN  RYGSPYYFD
+5       ASQDISN YFT     QYSTVPW GYDFTHY NTYTGE  PYYYGTSHWYFD
+```
+
+See (example.tsv)[examples/example.tsv] as well.
+
+
+**Paired FASTA input format**
+
+A set of 3 heavy chain CDR and 3 light chain CDR FASTA files can be accepted as input with the
+```-ch``` and ```-cl``` options, respectively.  Each FASTA file must be of the same length.  See the
+FASTA files in the (examples)[examples] directory.
 
 #### Output format
 
-@hkim please fill this in
+Output is provided as a CSV in the following format:
+
+```
+Antibody pair,RF Prediction,RF Percentile Rank,LR Prediction,LR Percentile Rank,GNB Prediction,GNB Percentile Rank,XGB 
+Prediction,XGB Percentile Rank,FFNN Prediction,FFNN Percentile Rank
+```
+
+One row per antibody and a set of two columns per predictor:
+
+ * The ```Prediction``` column indicates the score for the given predictor (higher is better).
+ * The ```Percentile Rank``` column indicates the rank of the score within a set of ~300,000 random scores (Range: 0-100; lower is better).
 
 ### Training
 
