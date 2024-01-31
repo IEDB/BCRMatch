@@ -37,7 +37,7 @@ docker run -it -v $(pwd):/src/bcrmatch bcrmatch /bin/bash
 
 ### 3. Local installation
 
-1. Install python requirments
+1. Install python requirements
 
 In a Python virtual environment, running version ```3.8.10``` or later, install the requirements with ```pip```:
 
@@ -84,8 +84,7 @@ python run_bcrmatch.py -i ./examples/example.tsv -tn abpairs_abligity
 > Optional flags:
 > * `--input-cdrh`/`-ch`: FASTA file containing CDRH sequence.
 > * `--input-cdrl`/`-cl`: FASTA file containing CDRL sequence.
-> * `--training-dataset-version`/`-tv`:  A version number of the dataset (default=`v1`).
-
+> * `--training-dataset-version`/`-tv`:  A version number of the dataset (default=`20240125`).
 <br>
 
 BCRMatch can also take in individual files (<i>3 CDRH FASTA files</i> and <i>3 CDRL FASTA files</i>) as input stead of a TSV file.
@@ -146,7 +145,7 @@ python run_bcrmatch.py \
 
 ### Output format
 
-The output file will be generated as a CSV file. It will contain all the prediction scores from each classiers, and percentile ranks for each prediction scores.
+The output file will be generated as a CSV file. It will contain all the prediction scores from each classifiers, and percentile ranks for each prediction scores.
 
 | Antibody pair | RF Prediction | RF Percentile Rank | LR Prediction | LR Percentile Rank | GNB Prediction | GNB Percentile Rank | XGB Prediction | XGB Percentile Rank | FFNN Prediction | FFNN Percentile Rank
 | -------- | ------- | ------- | ------- | ------- | ------- | ------- | ------- | ------- | ------- | ------- |
@@ -185,9 +184,9 @@ python run_bcrmatch.py \
 -tv 20240125
 ```
 
-The above code will save the classifier as a pickle file to `pickles/<dataset_name>/<dataset_version>/<classifier>_<dataset_name>.pkl`.
+The above code will save the classifier as a pickle file to `models/<dataset_name>/<dataset_version>/<classifier>_<dataset_name>.pkl`.
 > **_EXAMPLE_**<br>
-> The `rf_classifier` that's trained under `20240125` of `Abligity` dataset will be saved to `pickles/abpairs_abligity/20240125/rf_abpairs_abligity.pkl`
+> The `rf_classifier` that's trained under `20240125` of `Abligity` dataset will be saved to `models/abpairs_abligity/20240125/rf_abpairs_abligity.pkl`
 
 #### Forced training
 If the same dataset name and version is provided to train, the program will raise an error.
@@ -202,9 +201,13 @@ python run_bcrmatch.py -tm -tc datasets/abpairs_abligity.csv -tv 20240125 -f
 ```
 
 #### Custom directories / files
-If models are stored in a seperate/custom directories or `dataset-db` is saved somewhere else as a different name, then specify paths with `--models-dir`/`-md` and `--database`/`-db` flags.
+If models are stored in a separate/custom directories or `dataset-db` is saved somewhere else as a different name, then specify paths with `--models-dir`/`-md` and `--database`/`-db` flags, respectively.
 ```bash
-python run_bcrmatch.py -tm -tc datasets/abpairs_abligity.csv -tv 20240103 -md custom/path/to/models/directory -db custom/path/to/dataset-db-file
+python run_bcrmatch.py -tm \
+-tc datasets/abpairs_abligity.csv \
+-tv 20240103 \
+-md custom/path/to/models/directory \
+-db custom/path/to/dataset-db-file
 ```
 
 
