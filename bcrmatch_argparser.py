@@ -2,7 +2,7 @@ import argparse
 import textwrap
 import pandas as pd
 import os
-import re
+# import re
 
 
 class BCRMatchArgumentParser:
