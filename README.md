@@ -72,6 +72,15 @@ from outside of the container are in the section "`Running outside of the contai
 ### Prediction
 
 To perform a prediction, CDRLs and CDRHs are required along with a dataset name.<br>
+
+> **_NOTE_**<br>
+> If you don't have existing models available, please download the models using the following script.
+> ```bash
+> sh download-latest-models.sh
+> ``` 
+> This will create `models` folder that contains all the pickled models and `dataset-db` file.
+
+
 Following is an example of running a simple prediction:
 ```bash
 python run_bcrmatch.py -i ./examples/example.tsv -tn abpairs_abligity

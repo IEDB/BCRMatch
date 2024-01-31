@@ -88,6 +88,7 @@ class BCRMatchArgumentParser:
                             Rename the training dataset CSV to be stored in the database.
                             This will be used to lookup dataset in the database during prediction.
                             '''))
+        # TODO: This needs to be str type, as users can provide their custom versions.
         self.parser.add_argument('--training_dataset-version', '-tv',
                             dest = 'training_dataset_version',
                             required = False,
@@ -326,4 +327,6 @@ class BCRMatchArgumentParser:
                 self.set_models_dir(args)
 
         # This flag needs to be set always.
-        self.set_training_dataset_name(args)
+        # Exception: When user provides --list-datasets flag.
+        if 'list_datasets' not in vars(args):
+            self.set_training_dataset_name(args)
