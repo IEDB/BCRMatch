@@ -13,11 +13,11 @@ from pathlib import Path
 # Absolute path to the TCRMatch program
 TCRMATCH_PATH = os.getenv('TCRMATCH_PATH', '/src/bcrmatch')
 BASE_DIR = Path(__file__).parent.absolute()
-
+MODEL_DIR = 'models/models/'
 
 
 def load_percentile_rank_dataset(classifier):
-	pkl_path = f'./pickles/percentile_ranks/{classifier}.pkl'
+	pkl_path = f'./{MODEL_DIR}/percentile_ranks/{classifier}.pkl'
 	with open(pkl_path, 'rb') as f:
 		pr_dataset = pickle.load(f)
 	
@@ -82,11 +82,13 @@ def predict(complete_score_dict, classifiers, scaler):
 
 def get_classifiers(dataset_name, version, db):
 	df = pd.read_csv(db, sep='\t')
+	
+	# NOTE: dataset_version column is saved as int type.
 	filtered_df = df[(df['dataset_name']==dataset_name) & (df['dataset_version']==version)]	
 	classifiers = {}
 
 	for i, row in filtered_df.iterrows():
-		pkl_path = '%s/pickles/%s' %(BASE_DIR, row['pickle_file'])
+		pkl_path = '%s/%s/%s' %(BASE_DIR, MODEL_DIR, row['pickle_file'])
 		classifier = row['model']
 
 		try:
@@ -98,10 +100,12 @@ def get_classifiers(dataset_name, version, db):
 
 	return classifiers
 
+def get_models_dir_path(dataset, version):
+	return '%s/%s/%s/%s' %(BASE_DIR, MODEL_DIR, dataset, version)
+
 def save_scaler(dataset, version, scaler):
 	print("Pickling scaler object...")
-	base_path = '%s/pickles/%s/%s' %(BASE_DIR, dataset, version)
-	path = Path(base_path)
+	base_path = get_models_dir_path(dataset, version)
 	pkl_file_path = '%s/scaler.pkl' %(base_path)
 
 	with open(pkl_file_path, 'wb') as f:
@@ -114,7 +118,7 @@ def save_classifiers(dataset, version, classifiers):
 
 	for classifier_name, classifier_obj in classifiers.items():
 		# Create directories recursively even if they don't exists
-		base_path = '%s/pickles/%s/%s' %(BASE_DIR, dataset, version)
+		base_path = get_models_dir_path(dataset, version)
 		path = Path(base_path)
 		path.mkdir(parents=True, exist_ok=True)
 
@@ -291,8 +295,11 @@ def start_training_mode(parser):
 	training_dataset_version = parser.get_training_dataset_version()
 	force_retrain = parser.get_force_retrain_flag()
 	database_db = parser.get_database()
-	
+	models_dir = parser.get_models_dir()
 
+	global MODEL_DIR
+	MODEL_DIR = models_dir
+	
 	# Check existence of dataset db
 	if Path(database_db).is_file():
 		# Check if the user provided entry already exists in the database
@@ -353,7 +360,7 @@ def get_csv_file_path(dataset_name, version, db):
 
 def get_standard_scaler(dataset, version):
 	# Create directories recursively even if they don't exists
-	base_path = '%s/pickles/%s/%s' %(BASE_DIR, dataset, version)
+	base_path = get_models_dir_path(dataset, version)
 	path = Path(base_path)
 	path.mkdir(parents=True, exist_ok=True)
 
@@ -361,8 +368,11 @@ def get_standard_scaler(dataset, version):
 	pkl_file_path = '%s/%s' %(base_path, pkl_file_name)
 
 	scaler = None
-	with open(pkl_file_path, 'rb') as f:
-		scaler = pickle.load(f)
+	try:
+		with open(pkl_file_path, 'rb') as f:
+			scaler = pickle.load(f)
+	except:
+		raise FileExistsError(f'No such file or directory: \'{pkl_file_path}\'')
 	
 	return scaler
 
@@ -372,17 +382,16 @@ def main():
 	bcrmatch_parser = BCRMatchArgumentParser()
 	args, parser = bcrmatch_parser.parse_args(sys.argv[1:])
 
-	if args.list_datasets:
-		# minimal validation for listing of datasets
-		bcrmatch_parser.validate_for_list(args)
-		dataset_db = bcrmatch_parser.get_database()
+	# Basic validation and prep on all the params(flags)
+	bcrmatch_parser.validate(args)
+
+	dataset_db = bcrmatch_parser.get_database()
+
+	if bcrmatch_parser.get_list_datasets_flag():
 		dataset_df = get_available_datasets(dataset_db)
 		print(dataset_df.to_string(index=False))
 		sys.exit(0)
-
-	# Basic validation and prep on all the params(flags)
-	bcrmatch_parser.validate(args)
-	dataset_db = bcrmatch_parser.get_database()
+	
 
 	# Check training mode
 	if bcrmatch_parser.get_training_mode():

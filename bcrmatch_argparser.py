@@ -2,6 +2,7 @@ import argparse
 import textwrap
 import pandas as pd
 import os
+import re
 
 
 class BCRMatchArgumentParser:
@@ -17,6 +18,7 @@ class BCRMatchArgumentParser:
     _training_dataset_name = ''
     _training_dataset_version = ''
     _dataset_db = ''
+    _models_dir = ''
     _force_retrain_flag = False
     _list_datasets_flag = False
 
@@ -42,22 +44,36 @@ class BCRMatchArgumentParser:
                                     5   ASQDISN     YFT    QYSTVPW    GYDFTHY    NTYTGE    PYYYGTSHWYFD
                             '''
                             ))
-        self.parser.add_argument('--input-cdrh', '-ch', dest = 'cdrh_fasta', required = False,
+        self.parser.add_argument('--input-cdrh', '-ch', 
+                            dest = 'cdrh_fasta', 
+                            required = False,
                             nargs = '*', 
                             type = argparse.FileType('r'),
                             default = argparse.SUPPRESS,
                             help = 'FASTA file containing 3 CDRHs.')
-        self.parser.add_argument('--input-cdrl', '-cl', dest = 'cdrl_fasta', required = False,
+        self.parser.add_argument('--input-cdrl', '-cl', 
+                            dest = 'cdrl_fasta', 
+                            required = False,
                             nargs = '*', 
                             type = argparse.FileType('r'),
                             default = argparse.SUPPRESS,
                             help = 'FASTA file containing 3 CDRLs.')
-        self.parser.add_argument('--database', '-db', dest = 'database', required = False,
+        self.parser.add_argument('--database', '-db', 
+                            dest = 'database', 
+                            required = False,
                             type = str,
-                            default = 'dataset-db',
+                            default = 'models/dataset-db',
                             help = textwrap.dedent('''\
                             Path to the database/json created or modified in the training.
                             (The 'dataset-db' in the code directory will be used as the default database.)
+                            '''))
+        self.parser.add_argument('--models-dir', '-md', 
+                            dest = 'models_dir', 
+                            required = False,
+                            type = str,
+                            default = 'models/models/',
+                            help = textwrap.dedent('''\
+                            Path to the directory that contains all the pickled models.
                             '''))
         self.parser.add_argument('--training-dataset-csv', '-tc',
                             dest = 'training_dataset_csv',
@@ -75,7 +91,7 @@ class BCRMatchArgumentParser:
         self.parser.add_argument('--training_dataset-version', '-tv',
                             dest = 'training_dataset_version',
                             required = False,
-                            type = str,
+                            type = int,
                             default = '20240125',
                             help = 'A version number of the dataset.')
         self.parser.add_argument('--training-mode', '-tm',
@@ -93,7 +109,9 @@ class BCRMatchArgumentParser:
                             required = False,
                             action='store_true',
                             help = 'Displays all unique dataset/version.')
-        self.parser.add_argument('--output', '-o', dest = 'output', required = False,
+        self.parser.add_argument('--output', '-o', 
+                            dest = 'output', 
+                            required = False,
                             nargs = '?', 
                             type = argparse.FileType('w'),
                             action='store',
@@ -230,6 +248,8 @@ class BCRMatchArgumentParser:
     def get_database(self):
         return self._dataset_db
 
+    def get_models_dir(self):
+        return self._models_dir
 
     # Setters 
     def set_training_mode(self, args):
@@ -251,7 +271,15 @@ class BCRMatchArgumentParser:
             self._training_dataset_name = os.path.splitext(training_dataset_name)[0]
 
     def set_training_dataset_version(self, args):
+        # version needs to be in a date format (YYYYMMDD)
         training_dataset_version = getattr(args, 'training_dataset_version')
+
+        # pattern = re.compile(r'\d{4}\d{2}\d{2}')
+
+        # if not pattern.match(training_dataset_version):
+        #     raise ValueError(f'The dataset version needs to be in a date format(YYYYMMDD).\
+        #                       \nPlease correct the version({training_dataset_version}) to date format.')
+
         self._training_dataset_version = training_dataset_version
 
     def set_force_retrain_flag(self, args):
@@ -265,11 +293,14 @@ class BCRMatchArgumentParser:
     def set_database(self, args):
         db_path = getattr(args, 'database')
         self._dataset_db = db_path
+
+    def set_models_dir(self, args):
+        models_dir = getattr(args, 'models_dir')
+        if models_dir[::-1] != '/':
+            models_dir = models_dir + '/'
+            
+        self._models_dir = models_dir
         
-    def validate_for_list(self, args):
-        """Minimal validation needed when the --list-datesets option is specified"""
-        self.set_list_datasets(args)
-        self.set_database(args)
 
     def validate(self, args):
         for arg in vars(args):
@@ -290,6 +321,9 @@ class BCRMatchArgumentParser:
 
             if arg == 'database':
                 self.set_database(args)
-        
+            
+            if arg == 'models_dir':
+                self.set_models_dir(args)
+
         # This flag needs to be set always.
         self.set_training_dataset_name(args)
