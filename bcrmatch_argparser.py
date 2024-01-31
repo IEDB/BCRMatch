@@ -231,12 +231,6 @@ class BCRMatchArgumentParser:
     def get_training_dataset_name(self):
         return self._training_dataset_name
     
-    # def get_training_dataset_name(self, args):
-    #     training_dataset_file_path = self.get_training_dataset(args)
-    #     training_dataset_name = os.path.basename(training_dataset_file_path)
-    #     training_dataset_name = os.path.splitext(training_dataset_name)[0]
-    #     return training_dataset_name
-    
     def get_training_dataset_version(self):
         return self._training_dataset_version
     
@@ -305,8 +299,16 @@ class BCRMatchArgumentParser:
 
     def validate(self, args):
         for arg in vars(args):
+            # Check list_datasets first before checking others
+            # as this should take priority.
+            if arg == 'list_datasets':
+                self.set_list_datasets(args)
+            
             if arg == 'training_dataset_csv':
                 self.set_training_dataset(args)
+
+            if arg == 'training_dataset_name':
+                self.set_training_dataset_name(args)
 
             if arg == 'training_dataset_version':
                 self.set_training_dataset_version(args)
@@ -317,16 +319,8 @@ class BCRMatchArgumentParser:
             if arg == 'retrain_dataset':
                 self.set_force_retrain_flag(args)
 
-            if arg == 'list_datasets':
-                self.set_list_datasets(args)
-
             if arg == 'database':
                 self.set_database(args)
             
             if arg == 'models_dir':
                 self.set_models_dir(args)
-
-        # This flag needs to be set always.
-        # Exception: When user provides --list-datasets flag.
-        if 'list_datasets' not in vars(args):
-            self.set_training_dataset_name(args)

@@ -13,7 +13,7 @@ from pathlib import Path
 # Absolute path to the TCRMatch program
 TCRMATCH_PATH = os.getenv('TCRMATCH_PATH', '/src/bcrmatch')
 BASE_DIR = Path(__file__).parent.absolute()
-MODEL_DIR = 'models/models/'
+MODEL_DIR = 'models/models'
 
 
 def load_percentile_rank_dataset(classifier):
@@ -414,7 +414,7 @@ def main():
 	print("Retrieving all files containing the TCRMatch result...")
 	tcrout_files = get_tcr_output_files(sequence_info_dict)
 
-	print("Retrieve scores as dictionary...")
+	print("Retrieve scores...")
 	score_dict = get_scoring_dict_from_csv(tcrout_files)
 
 	classifiers = get_classifiers(dataset_name, dataset_ver, db=dataset_db)
