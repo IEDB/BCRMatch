@@ -117,6 +117,7 @@ class BCRMatchArgumentParser:
                             nargs = '?', 
                             type = str,
                             action='store',
+                            default = argparse.SUPPRESS,
                             help = textwrap.dedent('''\
                             Path to the output file.
                             (The default output file is 'output.csv'.)
@@ -301,19 +302,13 @@ class BCRMatchArgumentParser:
 
     def set_output_file_location(self, args):
         output_loc = getattr(args, 'output')
-
-        if not output_loc:
-            output_loc = './output.csv'
-
+        
         output_dir = Path(output_loc).parent.absolute()
 
         if not output_dir.is_dir():
             raise IsADirectoryError(f'{output_dir} folder does not exist. Please check your path.')
         
         self._output_location = output_loc
-
-        
-        
         
 
     def validate(self, args):
@@ -344,4 +339,5 @@ class BCRMatchArgumentParser:
             if arg == 'models_dir':
                 self.set_models_dir(args)
             
-        self.set_output_file_location(args)
+            if arg == 'output':
+                self.set_output_file_location(args)
