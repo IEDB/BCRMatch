@@ -239,6 +239,9 @@ docker run \
 bcrmatch
 ```
 
+> **_NOTE_**:
+Utilize the ```-v``` option to mount directories in order to get result files on local directory.
+
 ## Development notes
 
 Gitlab CI will build container images for all tags and push them to harbor.  They will need to be manually tagged with
