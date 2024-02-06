@@ -32,8 +32,22 @@ cause issues and the image may be unusable.
 
 Accessing inside the container to run the program:
 ```bash
-docker run -it -v $(pwd):/src/bcrmatch bcrmatch /bin/bash
+docker run -it bcrmatch /bin/bash
 ```
+
+#### Mounting Volumes
+
+Use the following commands to mount current directory to the container `/src/bcrmatch` folder.
+```
+docker run -it -v $(pwd):/src/bcrmatch bcrmatch /bin/bash 
+```
+
+> **_NOTE_**<br>
+> Mounting to the directory of BCRMatch will override container's volume, thus `models` folder will be missing in the container. Please re-run the download script to retrieve all models.
+> ```bash
+> sh download-latest-models.sh
+> ``` 
+> This will create `models` folder that contains all the pickled models and `dataset-db` file.
 
 ### 3. Local installation
 
@@ -72,6 +86,7 @@ from outside of the container are in the section "`Running outside of the contai
 ### Prediction
 
 To perform a prediction, CDRLs and CDRHs are required along with a dataset name.<br>
+
 Following is an example of running a simple prediction:
 ```bash
 python run_bcrmatch.py -i ./examples/example.tsv -tn abpairs_abligity
@@ -223,6 +238,9 @@ docker run \
 -e BCRMATCH_ARGS="-ch examples/cdrh1_seqs.fasta examples/cdrh2_seqs.fasta examples/cdrh3_seqs.fasta -cl examples/cdrl1_seqs.fasta examples/cdrl2_seqs.fasta examples/cdrl3_seqs.fasta -tn abpairs_abligity" \
 bcrmatch
 ```
+
+> **_NOTE_**:
+Utilize the ```-v``` option to mount directories in order to get result files on local directory.
 
 ## Development notes
 

@@ -2,7 +2,7 @@ import argparse
 import textwrap
 import pandas as pd
 import os
-import re
+from pathlib import Path
 
 
 class BCRMatchArgumentParser:
@@ -21,6 +21,7 @@ class BCRMatchArgumentParser:
     _models_dir = ''
     _force_retrain_flag = False
     _list_datasets_flag = False
+    _output_location = ''
 
     def __init__(self):
         pass
@@ -88,6 +89,7 @@ class BCRMatchArgumentParser:
                             Rename the training dataset CSV to be stored in the database.
                             This will be used to lookup dataset in the database during prediction.
                             '''))
+        # TODO: This needs to be str type, as users can provide their custom versions.
         self.parser.add_argument('--training_dataset-version', '-tv',
                             dest = 'training_dataset_version',
                             required = False,
@@ -113,7 +115,7 @@ class BCRMatchArgumentParser:
                             dest = 'output', 
                             required = False,
                             nargs = '?', 
-                            type = argparse.FileType('w'),
+                            type = str,
                             action='store',
                             default = argparse.SUPPRESS,
                             help = textwrap.dedent('''\
@@ -230,12 +232,6 @@ class BCRMatchArgumentParser:
     def get_training_dataset_name(self):
         return self._training_dataset_name
     
-    # def get_training_dataset_name(self, args):
-    #     training_dataset_file_path = self.get_training_dataset(args)
-    #     training_dataset_name = os.path.basename(training_dataset_file_path)
-    #     training_dataset_name = os.path.splitext(training_dataset_name)[0]
-    #     return training_dataset_name
-    
     def get_training_dataset_version(self):
         return self._training_dataset_version
     
@@ -250,6 +246,9 @@ class BCRMatchArgumentParser:
 
     def get_models_dir(self):
         return self._models_dir
+    
+    def get_output_file_location(self):
+        return self._output_location
 
     # Setters 
     def set_training_mode(self, args):
@@ -300,12 +299,30 @@ class BCRMatchArgumentParser:
             models_dir = models_dir + '/'
             
         self._models_dir = models_dir
+
+    def set_output_file_location(self, args):
+        output_loc = getattr(args, 'output')
+        
+        output_dir = Path(output_loc).parent.absolute()
+
+        if not output_dir.is_dir():
+            raise IsADirectoryError(f'{output_dir} folder does not exist. Please check your path.')
+        
+        self._output_location = output_loc
         
 
     def validate(self, args):
         for arg in vars(args):
+            # Check list_datasets first before checking others
+            # as this should take priority.
+            if arg == 'list_datasets':
+                self.set_list_datasets(args)
+            
             if arg == 'training_dataset_csv':
                 self.set_training_dataset(args)
+
+            if arg == 'training_dataset_name':
+                self.set_training_dataset_name(args)
 
             if arg == 'training_dataset_version':
                 self.set_training_dataset_version(args)
@@ -316,14 +333,11 @@ class BCRMatchArgumentParser:
             if arg == 'retrain_dataset':
                 self.set_force_retrain_flag(args)
 
-            if arg == 'list_datasets':
-                self.set_list_datasets(args)
-
             if arg == 'database':
                 self.set_database(args)
             
             if arg == 'models_dir':
                 self.set_models_dir(args)
-
-        # This flag needs to be set always.
-        self.set_training_dataset_name(args)
+            
+            if arg == 'output':
+                self.set_output_file_location(args)
