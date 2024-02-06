@@ -2,7 +2,7 @@ import argparse
 import textwrap
 import pandas as pd
 import os
-# import re
+from pathlib import Path
 
 
 class BCRMatchArgumentParser:
@@ -21,6 +21,7 @@ class BCRMatchArgumentParser:
     _models_dir = ''
     _force_retrain_flag = False
     _list_datasets_flag = False
+    _output_location = ''
 
     def __init__(self):
         pass
@@ -114,9 +115,8 @@ class BCRMatchArgumentParser:
                             dest = 'output', 
                             required = False,
                             nargs = '?', 
-                            type = argparse.FileType('w'),
+                            type = str,
                             action='store',
-                            default = argparse.SUPPRESS,
                             help = textwrap.dedent('''\
                             Path to the output file.
                             (The default output file is 'output.csv'.)
@@ -245,6 +245,9 @@ class BCRMatchArgumentParser:
 
     def get_models_dir(self):
         return self._models_dir
+    
+    def get_output_file_location(self):
+        return self._output_location
 
     # Setters 
     def set_training_mode(self, args):
@@ -295,6 +298,22 @@ class BCRMatchArgumentParser:
             models_dir = models_dir + '/'
             
         self._models_dir = models_dir
+
+    def set_output_file_location(self, args):
+        output_loc = getattr(args, 'output')
+
+        if not output_loc:
+            output_loc = './output.csv'
+
+        output_dir = Path(output_loc).parent.absolute()
+
+        if not output_dir.is_dir():
+            raise IsADirectoryError(f'{output_dir} folder does not exist. Please check your path.')
+        
+        self._output_location = output_loc
+
+        
+        
         
 
     def validate(self, args):
@@ -324,3 +343,5 @@ class BCRMatchArgumentParser:
             
             if arg == 'models_dir':
                 self.set_models_dir(args)
+            
+        self.set_output_file_location(args)
