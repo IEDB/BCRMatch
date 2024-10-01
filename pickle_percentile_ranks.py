@@ -4,9 +4,16 @@ from pathlib import Path
 
 
 def main():
-    filename = 'percentile_rank_dataset.csv'
+    # Modify these three variables appropriately
+    # TODO: Create argument parser for this
+    # filename = 'percentile_rank_dataset.csv'
+    # outfile_dir = './pickles/percentile_ranks'
+    # pr_df = pd.read_csv(f'./datasets/{filename}')
+    filename = 'output_filrered_newtrain.csv'
     outfile_dir = './pickles/percentile_ranks'
-    pr_df = pd.read_csv(f'./datasets/{filename}')
+    pr_df = pd.read_csv(filename)
+
+
     col_names = [col_name for col_name in list(pr_df.columns) if 'Prediction' in col_name]
     
     # Create directories recursively even if they don't exists

@@ -12,7 +12,7 @@ from pathlib import Path
 
 # Absolute path to the TCRMatch program
 TCRMATCH_PATH = os.getenv('TCRMATCH_PATH', '/src/bcrmatch')
-BASE_DIR = Path(__file__).parent.absolute()
+BASE_DIR = str(Path(__file__).parent.absolute())
 MODEL_DIR = 'models/models'
 
 
@@ -70,6 +70,8 @@ def predict(complete_score_dict, classifiers, scaler):
 		# input_data = classify_abs.preprocess_input_data([0.98,1,1,1,1,0.98])
 		input_data = classify_abs.preprocess_input_data(
 			complete_score_dict[ab_pair], scaler)
+		# input_data = classify_abs.preprocess_input_data(
+		# 	complete_score_dict[ab_pair])
 
 		for classifier_name, classifier_obj in classifiers.items():
 			if classifier_name == 'ffnn':

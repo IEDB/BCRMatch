@@ -94,7 +94,7 @@ class BCRMatchArgumentParser:
                             dest = 'training_dataset_version',
                             required = False,
                             type = int,
-                            default = '20240125',
+                            default = '20240916',
                             help = 'A version number of the dataset.')
         self.parser.add_argument('--training-mode', '-tm',
                             dest = 'training_mode',
@@ -312,32 +312,36 @@ class BCRMatchArgumentParser:
         
 
     def validate(self, args):
-        for arg in vars(args):
-            # Check list_datasets first before checking others
-            # as this should take priority.
-            if arg == 'list_datasets':
-                self.set_list_datasets(args)
+        # Check list_datasets first before checking others
+        # as this should take priority.
+        if hasattr(args, 'list_datasets'):
+            self.set_list_datasets(args)
             
-            if arg == 'training_dataset_csv':
-                self.set_training_dataset(args)
-
-            if arg == 'training_dataset_name':
-                self.set_training_dataset_name(args)
-
-            if arg == 'training_dataset_version':
-                self.set_training_dataset_version(args)
-
-            if arg == 'training_mode':
-                self.set_training_mode(args)
-
-            if arg == 'retrain_dataset':
-                self.set_force_retrain_flag(args)
-
-            if arg == 'database':
+            # terminate early only if 'list_datasets' is set to 'True'
+            if getattr(args, 'list_datasets'):
                 self.set_database(args)
+                return
             
-            if arg == 'models_dir':
-                self.set_models_dir(args)
-            
-            if arg == 'output':
-                self.set_output_file_location(args)
+        if hasattr(args, 'training_dataset_csv'):
+            self.set_training_dataset(args)
+
+        # if hasattr(args, 'training_dataset_name'):
+        self.set_training_dataset_name(args)
+
+        if hasattr(args, 'training_dataset_version'):
+            self.set_training_dataset_version(args)
+
+        if hasattr(args, 'training_mode'):
+            self.set_training_mode(args)
+
+        if hasattr(args, 'retrain_dataset'):
+            self.set_force_retrain_flag(args)
+
+        if hasattr(args, 'database'):
+            self.set_database(args)
+        
+        if hasattr(args, 'models_dir'):
+            self.set_models_dir(args)
+        
+        if hasattr(args, 'output'):
+            self.set_output_file_location(args)
