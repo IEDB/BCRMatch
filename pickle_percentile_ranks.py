@@ -9,9 +9,18 @@ def main():
     # filename = 'percentile_rank_dataset.csv'
     # outfile_dir = './pickles/percentile_ranks'
     # pr_df = pd.read_csv(f'./datasets/{filename}')
-    filename = 'output_filrered_newtrain.csv'
+
+    # filename = 'output_filrered_newtrain.csv'
     outfile_dir = './pickles/percentile_ranks'
-    pr_df = pd.read_csv(filename)
+    # pr_df = pd.read_csv(filename)
+
+    # Read Mahita's first data
+    df1 = pd.read_csv('output_filrered_newtrain.csv') 
+
+    # Read Mahita's second data
+    df2 = pd.read_csv('output_filtered_scv2_newtrain.csv')
+
+    pr_df = pd.concat([df1, df2], axis=0)
 
 
     col_names = [col_name for col_name in list(pr_df.columns) if 'Prediction' in col_name]
