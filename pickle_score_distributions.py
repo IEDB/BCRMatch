@@ -11,7 +11,7 @@ def main():
     # pr_df = pd.read_csv(f'./datasets/{filename}')
 
     # filename = 'output_filrered_newtrain.csv'
-    outfile_dir = './pickles/percentile_ranks'
+    outfile_dir = './pickles/score_distributions'
     # pr_df = pd.read_csv(filename)
 
     # Read Mahita's first data
