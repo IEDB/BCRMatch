@@ -9,25 +9,22 @@ def main():
     # filename = 'percentile_rank_dataset.csv'
     # outfile_dir = './pickles/percentile_ranks'
     # pr_df = pd.read_csv(f'./datasets/{filename}')
-
     # filename = 'output_filrered_newtrain.csv'
-    outfile_dir = './pickles/score_distributions'
-    # pr_df = pd.read_csv(filename)
 
-    # Read Mahita's first data
+    # Set file paths
+    curr_file = Path(__file__).parent
+    outfile_dir = curr_file / 'pickles' / 'score_distributions'
+    
+    # Create directory path if it does not exist
+    if not outfile_dir.is_dir(): 
+        outfile_dir.mkdir(parents=True, exist_ok=True)
+
+    # Read Mahita's first and second data, and combine them
     df1 = pd.read_csv('output_filrered_newtrain.csv') 
-
-    # Read Mahita's second data
     df2 = pd.read_csv('output_filtered_scv2_newtrain.csv')
-
     pr_df = pd.concat([df1, df2], axis=0)
 
-
     col_names = [col_name for col_name in list(pr_df.columns) if 'Prediction' in col_name]
-    
-    # Create directories recursively even if they don't exists
-    path = Path(outfile_dir)
-    path.mkdir(parents=True, exist_ok=True)
 
     for col_name in col_names :
         # retrieve only the classifier name
