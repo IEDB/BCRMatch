@@ -4,13 +4,6 @@ from pathlib import Path
 
 
 def main():
-    # Modify these three variables appropriately
-    # TODO: Create argument parser for this
-    # filename = 'percentile_rank_dataset.csv'
-    # outfile_dir = './pickles/percentile_ranks'
-    # pr_df = pd.read_csv(f'./datasets/{filename}')
-    # filename = 'output_filrered_newtrain.csv'
-
     # Set file paths
     curr_file = Path(__file__).parent
     outfile_dir = curr_file / 'pickles' / 'score_distributions'
@@ -35,7 +28,7 @@ def main():
 
         series = pr_df[col_name]
 
-        pickle_file_loc = f"{outfile_dir}/{file_name}.pkl"
+        pickle_file_loc = outfile_dir / f'{file_name}.pkl'
 
         with open(pickle_file_loc, 'wb') as f:
             pickle.dump(series, f)

@@ -28,6 +28,7 @@ def output_result(result_df, output_location):
 
 
 def load_percentile_rank_dataset(classifier):
+	#TODO: This is technically score distribution and not percentile rank.
 	pkl_path = f'./{MODEL_DIR}/percentile_ranks/{classifier}.pkl'
 	with open(pkl_path, 'rb') as f:
 		pr_dataset = pickle.load(f)
