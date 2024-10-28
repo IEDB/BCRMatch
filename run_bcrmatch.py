@@ -1,10 +1,9 @@
 import os
 import sys
-import csv
 import pickle
 import tempfile
 import pandas as pd
-from scipy import stats
+from statsmodels.distributions.empirical_distribution import ECDF
 from bcrmatch_argparser import BCRMatchArgumentParser
 from bcrmatch import bcrmatch_functions, classify_abs
 from subprocess import Popen, PIPE
@@ -42,8 +41,10 @@ def calculate_percentile_rank(classifier, score):
 	'''
 	pr_dataset = load_percentile_rank_dataset(classifier)
 
+	ecdf = ECDF(pr_dataset.values)
+
 	# return the percentile rank
-	return stats.percentileofscore(pr_dataset, score)
+	return ecdf(score) * 100
 
 def predict(complete_score_dict, classifiers, scaler):
 	result = []
