@@ -13,8 +13,8 @@ def main():
         outfile_dir.mkdir(parents=True, exist_ok=True)
 
     # Read Mahita's first and second data, and combine them
-    df1 = pd.read_csv('output_filrered_newtrain.csv') 
-    df2 = pd.read_csv('output_filtered_scv2_newtrain.csv')
+    df1 = pd.read_csv('output_filtered_newtrain.csv') 
+    df2 = pd.read_csv('output_filtered_newtrain2.csv')
     pr_df = pd.concat([df1, df2], axis=0)
 
     col_names = [col_name for col_name in list(pr_df.columns) if 'Prediction' in col_name]
