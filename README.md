@@ -38,6 +38,12 @@ Accessing inside the container to run the program:
 docker run -it bcrmatch /bin/bash
 ```
 
+It is also possible to run a command without having to stepping inside the container. The following command will allow to run the command and automatically clean up the container afterwords.
+
+```bash
+docker run --rm bcrmatch python3 run_bcrmatch.py -i ./examples/example.tsv -tn abpairs_abligity
+```
+
 #### Mounting Volumes
 
 Use the following commands to mount current directory to the container `/src/bcrmatch` folder.
@@ -83,6 +89,7 @@ export TCRMATCH_PATH=/path/to/tcrmatch_dir
 Run the script ``dataset-download.sh`` to download the most _up-to-date_ pre-trained datasets from the IEDB servers:
 
 ```bash
+
 sh dataset-download.sh
 ```
 
@@ -263,6 +270,36 @@ bcrmatch
 
 > **_NOTE_**:
 > Utilize the ``-v`` option to mount directories in order to get result files on local directory.
+
+It is also possible to pipe the result to local file.
+
+```bash
+docker run --rm bcrmatch python3 run_bcrmatch.py -i ./examples/example.tsv -tn abpairs_abligity > ./output.csv
+```
+
+
+
+### Retrieving result files from the container
+
+Let say inside the BCRMatch container, the following command was run.
+
+```bash
+python run_bcrmatch.py -i ./examples/example.tsv -tn abpairs_abligity -o bcroutput.csv
+```
+
+The `bcroutput.csv` file will be saved in the default current directory (`/src/bcrmatch`).
+
+When exiting out of the container, the container will be stopped. Let say that the container ID is `3145157374cb`.
+
+One way to retrieve the output file from the container is through using `docker cp`:
+
+```docker
+docker cp <CONTAINER ID>:<PATH-TO-OUTPUT-FILE> <LOCAL-DIRECTORY>
+
+# Using the above example...
+docker cp 3145157374cb:/src/bcrmatch/bcroutput.csv .
+```
+
 
 ## Development notes
 
