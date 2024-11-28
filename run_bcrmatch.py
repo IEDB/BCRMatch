@@ -16,16 +16,37 @@ MODEL_DIR = 'models/models'
 
 
 def output_result(result_df, output_location):
+	default_columns_to_display = [
+		'Antibody pair',
+		'LR Prediction',
+		'LR Percentile Rank',
+		'GNB Prediction',
+		'GNB Percentile Rank',
+		'Mean Percentile Rank',
+	]
 	# Display result to terminal
 	if not output_location:
-		print(result_df.to_string())
+		print(result_df[default_columns_to_display].to_string())
 		sys.exit()
 
 	# Write out to a file
 	result_df.to_csv(output_location, index=False)
 	print("Completed!")
 
+def add_mean_percentile_ranks(df):
+	headers = df.columns.tolist()
+	mean_col_list = []
+	lr_idx = headers.index('LR Percentile Rank')+1
+	gnb_idx = headers.index('GNB Percentile Rank')+1
 
+	for row in df.itertuples(): 
+		lr_pr = getattr(row, f'_{lr_idx}')
+		gnb_pr = getattr(row, f'_{gnb_idx}')
+		mean = (lr_pr + gnb_pr) / 2.0
+		mean_col_list.append(mean)
+	
+	df['Mean Percentile Rank'] = mean_col_list
+	return df
 
 def load_percentile_rank_dataset(classifier):
 	#TODO: This is technically score distribution and not percentile rank.
@@ -63,6 +84,7 @@ def predict(complete_score_dict, classifiers, scaler):
 		"XGB Percentile Rank",
 		"FFNN Prediction",
 		"FFNN Percentile Rank",
+		# "Mean LR and GNB Percentile Ranks"
 		]
 
 	for ab_pair in complete_score_dict.keys():
@@ -436,6 +458,8 @@ def main():
 	classifiers = get_classifiers(dataset_name, dataset_ver, db=dataset_db)
 
 	result_df = predict(score_dict, classifiers, scaler)
+
+	result_df = add_mean_percentile_ranks(result_df)
 
 	output_result(result_df, output_location)
 
