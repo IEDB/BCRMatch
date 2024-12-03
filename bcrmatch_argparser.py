@@ -22,6 +22,7 @@ class BCRMatchArgumentParser:
     _force_retrain_flag = False
     _list_datasets_flag = False
     _output_location = ''
+    _verbose = False
 
     def __init__(self):
         pass
@@ -89,6 +90,15 @@ class BCRMatchArgumentParser:
                             Rename the training dataset CSV to be stored in the database.
                             This will be used to lookup dataset in the database during prediction.
                             '''))
+        self.parser.add_argument('--verbose', '-v', 
+                    dest = 'verbose', 
+                    required = False, 
+                    # type = bool,
+                    action='store_true',
+                    default = argparse.SUPPRESS,
+                    help = textwrap.dedent('''\
+                    Display the complete result data to the user.
+                    '''))
         # TODO: This needs to be str type, as users can provide their custom versions.
         self.parser.add_argument('--training_dataset-version', '-tv',
                             dest = 'training_dataset_version',
@@ -249,6 +259,9 @@ class BCRMatchArgumentParser:
     
     def get_output_file_location(self):
         return self._output_location
+    
+    def get_verbose(self):
+        return self._verbose
 
     # Setters 
     def set_training_mode(self, args):
@@ -309,7 +322,9 @@ class BCRMatchArgumentParser:
             raise IsADirectoryError(f'{output_dir} folder does not exist. Please check your path.')
         
         self._output_location = output_loc
-        
+
+    def set_verbose(self, args):
+        self._verbose = getattr(args, 'verbose')
 
     def validate(self, args):
         # Check list_datasets first before checking others
@@ -345,3 +360,6 @@ class BCRMatchArgumentParser:
         
         if hasattr(args, 'output'):
             self.set_output_file_location(args)
+        
+        if hasattr(args, 'verbose'):
+            self.set_verbose(args)

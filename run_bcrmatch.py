@@ -15,18 +15,26 @@ BASE_DIR = str(Path(__file__).parent.absolute())
 MODEL_DIR = 'models/models'
 
 
-def output_result(result_df, output_location):
+def output_result(result_df, output_location, is_verbose):
 	default_columns_to_display = [
 		'Antibody pair',
 		'LR Prediction',
 		'LR Percentile Rank',
 		'GNB Prediction',
 		'GNB Percentile Rank',
+		# 'XGB Percentile Rank',
+		# 'FFNN Percentile Rank',
+		# 'RF Percentile Rank',
 		'Mean Percentile Rank',
+		# 'Overall Mean Percentile Rank',
 	]
+
+	if not is_verbose:
+		result_df = result_df[default_columns_to_display].to_string()
+
 	# Display result to terminal
 	if not output_location:
-		print(result_df[default_columns_to_display].to_string())
+		print(result_df)
 		sys.exit()
 
 	# Write out to a file
@@ -35,17 +43,32 @@ def output_result(result_df, output_location):
 
 def add_mean_percentile_ranks(df):
 	headers = df.columns.tolist()
-	mean_col_list = []
+	lr_gnb_mean_col_list = []
+	overall_mean_col_list = []
 	lr_idx = headers.index('LR Percentile Rank')+1
 	gnb_idx = headers.index('GNB Percentile Rank')+1
+	xgb_idx = headers.index('XGB Percentile Rank')+1
+	ffnn_idx = headers.index('FFNN Percentile Rank')+1
+	rf_idx = headers.index('RF Percentile Rank')+1
 
+	# Adding LR+GNB mean percentile rank + Overall mean percentile rank
 	for row in df.itertuples(): 
+		# LR+GNB mean percentile rank
 		lr_pr = getattr(row, f'_{lr_idx}')
 		gnb_pr = getattr(row, f'_{gnb_idx}')
 		mean = (lr_pr + gnb_pr) / 2.0
-		mean_col_list.append(mean)
-	
-	df['Mean Percentile Rank'] = mean_col_list
+		lr_gnb_mean_col_list.append(mean)
+
+		# Overall mean percentile rank
+		xgb_pr = getattr(row, f'_{xgb_idx}')
+		ffnn_pr = getattr(row, f'_{ffnn_idx}')
+		rf_pr = getattr(row, f'_{rf_idx}')
+		mean = (lr_pr + gnb_pr + xgb_pr + ffnn_pr + rf_pr) / 5.0
+		overall_mean_col_list.append(mean)
+
+	df['Mean Percentile Rank'] = lr_gnb_mean_col_list
+	df['Overall Mean Percentile Rank'] = overall_mean_col_list
+
 	return df
 
 def load_percentile_rank_dataset(classifier):
@@ -445,6 +468,7 @@ def main():
 	dataset_name = bcrmatch_parser.get_training_dataset_name()
 	dataset_ver = bcrmatch_parser.get_training_dataset_version()
 	output_location = bcrmatch_parser.get_output_file_location()
+	verbose = bcrmatch_parser.get_verbose()
 
 	# Get scaler that was pre-fitted to the training dataset through dataset_name
 	scaler = get_standard_scaler(dataset_name, dataset_ver)
@@ -461,7 +485,7 @@ def main():
 
 	result_df = add_mean_percentile_ranks(result_df)
 
-	output_result(result_df, output_location)
+	output_result(result_df, output_location, is_verbose=verbose)
 
 
 if __name__ == "__main__":
