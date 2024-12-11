@@ -2,27 +2,31 @@
 import pandas as pd
 from anarci import run_anarci
 
-    
-def extract_cdr1(sequence):
-    # These limits are constant variables for both heavy and light chains
+
+def extract_cdr(sequence, region):
+    # Region refers to L1,2,3 or H1,2,3
     CDR1_SEQUENCE_LIMIT = (27, 38)
-    output = run_anarci(sequence)
-    cdr1 = ''.join([y for x,y in output[1][0][0][0] if (x[0] in range(CDR1_SEQUENCE_LIMIT[0], CDR1_SEQUENCE_LIMIT[1]+1))&(y != '-')])
-    return(cdr1)
-
-def extract_cdr2(sequence):
-    # These limits are constant variables for both heavy and light chains
     CDR2_SEQUENCE_LIMIT = (56, 65)
-    output = run_anarci(sequence)
-    cdr2 = ''.join([y for x,y in output[1][0][0][0] if (x[0] in range(CDR2_SEQUENCE_LIMIT[0], CDR2_SEQUENCE_LIMIT[1]+1))&(y != '-')])
-    return(cdr2)
-
-def extract_cdr3(sequence):
-    # These limits are constant variables for both heavy and light chains
     CDR3_SEQUENCE_LIMIT = (105, 117)
+    cdr_upper_limit = 0
+    cdr_lower_limit = 0
+
+    if region == 1:
+        cdr_lower_limit = CDR1_SEQUENCE_LIMIT[0]
+        cdr_upper_limit = CDR1_SEQUENCE_LIMIT[1] + 1
+    
+    if region == 2:
+        cdr_lower_limit = CDR2_SEQUENCE_LIMIT[0]
+        cdr_upper_limit = CDR2_SEQUENCE_LIMIT[1] + 1
+
+    if region == 3:
+        cdr_lower_limit = CDR3_SEQUENCE_LIMIT[0]
+        cdr_upper_limit = CDR3_SEQUENCE_LIMIT[1] + 1
+
     output = run_anarci(sequence)
-    cdr3 = ''.join([y for x,y in output[1][0][0][0] if (x[0] in range(CDR3_SEQUENCE_LIMIT[0], CDR3_SEQUENCE_LIMIT[1]+1))&(y != '-')])
-    return(cdr3)
+    cdr = ''.join([y for x,y in output[1][0][0][0] if (x[0] in range(cdr_lower_limit, cdr_upper_limit))&(y != '-')])
+    return(cdr)
+
 
 
 def read_fasta(file_path):
@@ -58,6 +62,9 @@ def main():
     # print(heavy_seqs.keys())
     # print(light_seqs.keys())
 
+    REGION_LIMIT = 3
+
+    # Create empty result DataFrame
     col_names = ['Seq_Name', 'CDRL1', 'CDRL2', 'CDRL3', 'CDRH1', 'CDRH2', 'CDRH3']
     result_df = pd.DataFrame(columns=col_names)
 
@@ -68,30 +75,21 @@ def main():
         heavy_sequence = heavy_seqs[id]
         light_sequence = light_seqs[id]
 
-        cdrh1_seq = extract_cdr1(heavy_sequence)
-        cdrh2_seq = extract_cdr2(heavy_sequence)
-        cdrh3_seq = extract_cdr3(heavy_sequence)
+        row = []
+        for i in range(REGION_LIMIT):
+            region = i + 1
+            cdrh_seq = extract_cdr(heavy_sequence, region=region)
+            cdrl_seq = extract_cdr(light_sequence, region=region)
+            row.append(cdrh_seq) # all CDRH sequences will be stored on even indices
+            row.append(cdrl_seq) # all CDRL sequences will be stored on odd indices
 
-        cdrl1_seq = extract_cdr1(light_sequence)
-        cdrl2_seq = extract_cdr2(light_sequence)
-        cdrl3_seq = extract_cdr3(light_sequence)
-
-        result_df.loc[len(result_df)] = [
-            id,
-            cdrl1_seq,
-            cdrl2_seq,
-            cdrl3_seq,
-            cdrh1_seq,
-            cdrh2_seq,
-            cdrh3_seq
-        ]
+        # Rearrange so CDRLs stay ahead of CDRHs
+        cdrhs = row[0::2]
+        cdrls = row[1::2]
+        result_df.loc[len(result_df)] = [id] + cdrls + cdrhs
 
     print(result_df)
-        
-
     
-
-
 
 if __name__=='__main__':
     main()
