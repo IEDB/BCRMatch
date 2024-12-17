@@ -60,6 +60,20 @@ class BCRMatchArgumentParser:
                             type = argparse.FileType('r'),
                             default = argparse.SUPPRESS,
                             help = 'FASTA file containing 3 CDRLs.')
+        self.parser.add_argument('--full-heavy-chain-fasta', '-fh', 
+                            dest = 'full_heavy_fasta', 
+                            required = False,
+                            nargs = '*', 
+                            type = argparse.FileType('r'),
+                            default = argparse.SUPPRESS,
+                            help = 'Full length heavy sequences in FASTA format.')
+        self.parser.add_argument('--full-light-chain-fasta', '-fl', 
+                            dest = 'full_light_fasta', 
+                            required = False,
+                            nargs = '*', 
+                            type = argparse.FileType('r'),
+                            default = argparse.SUPPRESS,
+                            help = 'Full length light sequences in FASTA format.')
         self.parser.add_argument('--database', '-db', 
                             dest = 'database', 
                             required = False,
@@ -171,6 +185,10 @@ class BCRMatchArgumentParser:
 
         if 'input_tsv' in args:
             return self.get_input_tsv_content(args)
+        
+        # import sys
+        # print(args)
+        # sys.exit(0)
         
 
         # Check if cdrh/cdrl flags are specified.
@@ -336,7 +354,15 @@ class BCRMatchArgumentParser:
             if getattr(args, 'list_datasets'):
                 self.set_database(args)
                 return
-            
+        
+        if hasattr(args, 'full_heavy_fasta'):
+            print('Validating full length heavy FASTA sequences...')
+            return
+
+        if hasattr(args, 'full_light_fasta'):
+            print('Validating full length light FASTA sequences...')
+            return
+
         if hasattr(args, 'training_dataset_csv'):
             self.set_training_dataset(args)
 

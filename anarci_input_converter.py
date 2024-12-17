@@ -52,10 +52,10 @@ def read_fasta(file_path):
 
 
 def main():
-    heavy_chain_fasta_file = '/mnt/c/Users/USER/NG-IEDB/cli-tools/BCRMatch/examples/heavy_chain_seq_input.fasta'
+    heavy_chain_fasta_file = 'examples/heavy_chain_seq_input.fasta'
     heavy_seqs = read_fasta(heavy_chain_fasta_file)
 
-    light_chain_fasta_file = '/mnt/c/Users/USER/NG-IEDB/cli-tools/BCRMatch/examples/light_chain_seq_input.fasta'
+    light_chain_fasta_file = 'examples/light_chain_seq_input.fasta'
     light_seqs = read_fasta(light_chain_fasta_file)
     # print(heavy_seqs)
     # print(light_seqs)
