@@ -30,7 +30,7 @@ def output_result(result_df, output_location, is_verbose):
 	]
 
 	if not is_verbose:
-		result_df = result_df[default_columns_to_display].to_string()
+		result_df = result_df[default_columns_to_display]
 
 	# Display result to terminal
 	if not output_location:

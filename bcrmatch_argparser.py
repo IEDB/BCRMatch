@@ -3,7 +3,7 @@ import textwrap
 import pandas as pd
 import os
 from pathlib import Path
-
+from anarci_input_converter import get_cdr_table
 
 class BCRMatchArgumentParser:
     parser = argparse.ArgumentParser(
@@ -63,14 +63,14 @@ class BCRMatchArgumentParser:
         self.parser.add_argument('--full-heavy-chain-fasta', '-fh', 
                             dest = 'full_heavy_fasta', 
                             required = False,
-                            nargs = '*', 
+                            nargs = 1, 
                             type = argparse.FileType('r'),
                             default = argparse.SUPPRESS,
                             help = 'Full length heavy sequences in FASTA format.')
         self.parser.add_argument('--full-light-chain-fasta', '-fl', 
                             dest = 'full_light_fasta', 
                             required = False,
-                            nargs = '*', 
+                            nargs = 1, 
                             type = argparse.FileType('r'),
                             default = argparse.SUPPRESS,
                             help = 'Full length light sequences in FASTA format.')
@@ -155,6 +155,37 @@ class BCRMatchArgumentParser:
 
         return self.parser.parse_args(), self.parser
     
+    def read_fasta(self, file_path):
+        with open(file_path, 'r') as file:
+            sequence_id = None
+            sequence = ''
+            sequences = {}
+
+            for line in file:
+                line = line.strip()
+                if line.startswith('>'):
+                    if sequence_id:  # Save the previous sequence
+                        sequences[sequence_id] = sequence
+                    sequence_id = line[1:]  # Get the sequence ID (remove '>')
+                    sequence = ''
+                else:
+                    sequence += line  # Append sequence data
+
+            if sequence_id:  # Save the last sequence
+                sequences[sequence_id] = sequence
+
+        return sequences
+
+
+    def get_anarci_input_to_tsv(self, args):
+        ''' DESCRIPTION:
+            Takes two FASTA files: one full heavy sequences FASTA and one full light sequences FASTA file. 
+            This then uses ANARCI to pull out the CDRL and CDRH sequences and creates a table.
+        '''
+        full_heavy_file = getattr(args, 'full_heavy_fasta')[0]
+        full_light_file = getattr(args, 'full_light_fasta')[0]
+        df = get_cdr_table(full_heavy_file.name, full_light_file.name)
+        return df
 
     def get_input_tsv_content(self, args) :
         ''' DESCRIPTION:
@@ -183,14 +214,21 @@ class BCRMatchArgumentParser:
         '''
         _NUM_FASTA_FILES = 3
 
+        # CASE 1: User provides TSV file
         if 'input_tsv' in args:
             return self.get_input_tsv_content(args)
-        
-        # import sys
-        # print(args)
-        # sys.exit(0)
-        
 
+        # CASE 2: User provides full heavy and light fasta files (total 2 files)
+        if 'full_heavy_fasta' in args and 'full_light_fasta' not in args:
+            raise parser.error('missing full light file')
+
+        if 'full_light_fasta' in args and 'full_heavy_fasta' not in args:
+            raise parser.error('missing full heavy file')
+
+        if 'full_light_fasta' in args and 'full_heavy_fasta' in args:
+            return self.get_anarci_input_to_tsv(args)
+        
+        # CASE 3: User provides 3 CDRL FASTA files and 3 CDRH FASTA files
         # Check if cdrh/cdrl flags are specified.
         if 'cdrh_fasta' not in args :
             raise parser.error('Please provide FASTA files containing CDRH sequences.')
@@ -356,12 +394,12 @@ class BCRMatchArgumentParser:
                 return
         
         if hasattr(args, 'full_heavy_fasta'):
-            print('Validating full length heavy FASTA sequences...')
-            return
+            # print('Validating full length heavy FASTA sequences...')
+            pass
 
         if hasattr(args, 'full_light_fasta'):
-            print('Validating full length light FASTA sequences...')
-            return
+            # print('Validating full length light FASTA sequences...')
+            pass
 
         if hasattr(args, 'training_dataset_csv'):
             self.set_training_dataset(args)

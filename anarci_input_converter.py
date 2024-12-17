@@ -51,18 +51,11 @@ def read_fasta(file_path):
     return sequences
 
 
-def main():
-    heavy_chain_fasta_file = 'examples/heavy_chain_seq_input.fasta'
-    heavy_seqs = read_fasta(heavy_chain_fasta_file)
-
-    light_chain_fasta_file = 'examples/light_chain_seq_input.fasta'
-    light_seqs = read_fasta(light_chain_fasta_file)
-    # print(heavy_seqs)
-    # print(light_seqs)
-    # print(heavy_seqs.keys())
-    # print(light_seqs.keys())
-
+def get_cdr_table(heavy_file, light_file):
     REGION_LIMIT = 3
+
+    heavy_seqs = read_fasta(heavy_file)
+    light_seqs = read_fasta(light_file)
 
     # Create empty result DataFrame
     col_names = ['Seq_Name', 'CDRL1', 'CDRL2', 'CDRL3', 'CDRH1', 'CDRH2', 'CDRH3']
@@ -88,8 +81,17 @@ def main():
         cdrls = row[1::2]
         result_df.loc[len(result_df)] = [id] + cdrls + cdrhs
 
-    print(result_df)
+    return result_df
     
+
+def main():
+    heavy_chain_fasta_file = 'examples/heavy_chain_seq_input.fasta'
+
+    light_chain_fasta_file = 'examples/light_chain_seq_input.fasta'
+
+    df = get_cdr_table(heavy_chain_fasta_file, light_chain_fasta_file)
+    print(df)
+
 
 if __name__=='__main__':
     main()
