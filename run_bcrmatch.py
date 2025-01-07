@@ -8,6 +8,7 @@ from bcrmatch_argparser import BCRMatchArgumentParser
 from bcrmatch import bcrmatch_functions, classify_abs
 from subprocess import Popen, PIPE
 from pathlib import Path
+from statistics import harmonic_mean
 
 # Absolute path to the TCRMatch program
 TCRMATCH_PATH = os.getenv('TCRMATCH_PATH', '/src/bcrmatch')
@@ -56,15 +57,16 @@ def add_mean_percentile_ranks(df):
 		# LR+GNB mean percentile rank
 		lr_pr = getattr(row, f'_{lr_idx}')
 		gnb_pr = getattr(row, f'_{gnb_idx}')
-		mean = (lr_pr + gnb_pr) / 2.0
-		lr_gnb_mean_col_list.append(mean)
+		mean = harmonic_mean([lr_pr, gnb_pr])
+		# round it to two decimal places
+		lr_gnb_mean_col_list.append(round(mean, 2))
 
 		# Overall mean percentile rank
 		xgb_pr = getattr(row, f'_{xgb_idx}')
 		ffnn_pr = getattr(row, f'_{ffnn_idx}')
 		rf_pr = getattr(row, f'_{rf_idx}')
-		mean = (lr_pr + gnb_pr + xgb_pr + ffnn_pr + rf_pr) / 5.0
-		overall_mean_col_list.append(mean)
+		mean = harmonic_mean([lr_pr, gnb_pr, xgb_pr, ffnn_pr, rf_pr])
+		overall_mean_col_list.append(round(mean, 2))
 
 	df['Mean Percentile Rank'] = lr_gnb_mean_col_list
 	df['Overall Mean Percentile Rank'] = overall_mean_col_list
@@ -89,7 +91,8 @@ def calculate_percentile_rank(classifier, score):
 	ecdf = ECDF(pr_dataset.values)
 
 	# return the percentile rank
-	return ecdf(score) * 100
+	# NOTE: High score should equal lower ranks
+	return (1 - ecdf(score)) * 100
 
 def predict(complete_score_dict, classifiers, scaler):
 	result = []
@@ -131,9 +134,9 @@ def predict(complete_score_dict, classifiers, scaler):
 			# calculate percentile rank
 			percentile_rank = calculate_percentile_rank(classifier_name, score)
 
-			# add score and percentile rank
-			rowline.append(score)
-			rowline.append(percentile_rank)
+			# add score and percentile rank + round it to two decimal places
+			rowline.append(round(score, 2))
+			rowline.append(round(percentile_rank, 2))
 
 		result.append(rowline)
 
