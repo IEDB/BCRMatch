@@ -59,14 +59,17 @@ def add_mean_percentile_ranks(df):
 		gnb_pr = getattr(row, f'_{gnb_idx}')
 		mean = harmonic_mean([lr_pr, gnb_pr])
 		# round it to two decimal places
-		lr_gnb_mean_col_list.append(round(mean, 2))
+		# lr_gnb_mean_col_list.append(round(mean, 2))
+		lr_gnb_mean_col_list.append(mean)
+
 
 		# Overall mean percentile rank
 		xgb_pr = getattr(row, f'_{xgb_idx}')
 		ffnn_pr = getattr(row, f'_{ffnn_idx}')
 		rf_pr = getattr(row, f'_{rf_idx}')
 		mean = harmonic_mean([lr_pr, gnb_pr, xgb_pr, ffnn_pr, rf_pr])
-		overall_mean_col_list.append(round(mean, 2))
+		# overall_mean_col_list.append(round(mean, 2))
+		overall_mean_col_list.append(mean)
 
 	df['Mean Percentile Rank'] = lr_gnb_mean_col_list
 	df['Overall Mean Percentile Rank'] = overall_mean_col_list
@@ -135,13 +138,26 @@ def predict(complete_score_dict, classifiers, scaler):
 			percentile_rank = calculate_percentile_rank(classifier_name, score)
 
 			# add score and percentile rank + round it to two decimal places
-			rowline.append(round(score, 2))
-			rowline.append(round(percentile_rank, 2))
+			# rowline.append(round(score, 2))
+			# rowline.append(round(percentile_rank, 2))			
+			# rowline.append(score)
+			# rowline.append(percentile_rank)
+			rowline.append(format_values(score))
+			rowline.append(format_values(percentile_rank))
 
 		result.append(rowline)
 
 	return pd.DataFrame(result, columns=result_header)
 
+def format_values(value):
+	import numpy as np
+
+	if value < 0.1:
+        # Format in scientific notation and convert back to numpy.float64
+		return np.float64(f"{value:.6e}")
+	else:
+        # Format to 2 decimal places and convert back to numpy.float64
+		return np.float64(f"{value:.2f}")
 
 def get_classifiers(dataset_name, version, db):
 	df = pd.read_csv(db, sep='\t')
