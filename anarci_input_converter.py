@@ -81,7 +81,7 @@ def get_cdr_table(heavy_file, light_file):
         cdrls = row[1::2]
         result_df.loc[len(result_df)] = [id] + cdrls + cdrhs
 
-    return result_df
+    return result_df.to_dict(orient='list')
     
 
 def main():
@@ -90,7 +90,7 @@ def main():
     light_chain_fasta_file = 'examples/light_chain_seq_input.fasta'
 
     df = get_cdr_table(heavy_chain_fasta_file, light_chain_fasta_file)
-    print(df)
+    print(df.to_string())
 
 
 if __name__=='__main__':
