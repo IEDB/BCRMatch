@@ -1,4 +1,4 @@
-FROM harbor.lji.org/iedb-public/tcrmatch:0.1.1
+FROM harbor.lji.org/iedb-public/tcrmatch:1.0.2
 
 # Prevent python from writing bytcode files to disk
 ENV PYTHONDONTWRITEBYTECODE=1
