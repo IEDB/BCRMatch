@@ -61,7 +61,7 @@ class TestBasicPrediction(unittest.TestCase):
         # Training
         command = [
             self.python_path, 
-            "run_bcrmatch_new.py", 
+            "run_bcrmatch.py", 
             "-tm", 
             "-tc", f"{self.dataset}.csv", 
             # 9999 to indicate that it's a test
@@ -83,7 +83,7 @@ class TestBasicPrediction(unittest.TestCase):
         # Prediction
         command = [
             self.python_path,  # the Python executable
-            "run_bcrmatch_new.py",  # the script to run
+            "run_bcrmatch.py",  # the script to run
             "-ch", f"{self.example_dir}/cdrh1_input.fasta", f"{self.example_dir}/cdrh2_input.fasta", f"{self.example_dir}/cdrh3_input.fasta",  # cdrh arguments
             "-cl", f"{self.example_dir}/cdrl1_input.fasta", f"{self.example_dir}/cdrl2_input.fasta", f"{self.example_dir}/cdrl3_input.fasta",  # cdrl arguments
             "-tn", self.dataset,  # training name

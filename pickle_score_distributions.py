@@ -13,9 +13,11 @@ def main():
         outfile_dir.mkdir(parents=True, exist_ok=True)
 
     # Read Mahita's first and second data, and combine them
-    df1 = pd.read_csv('output_filtered_newtrain.csv') 
-    df2 = pd.read_csv('output_filtered_newtrain2.csv')
-    pr_df = pd.concat([df1, df2], axis=0)
+    # df1 = pd.read_csv('output_filtered_newtrain.csv') 
+    # df2 = pd.read_csv('output_filtered_newtrain2.csv')
+    # pr_df = pd.concat([df1, df2], axis=0)
+
+    pr_df = pd.read_csv('output_iedb_sarscov2_combined_newtrain_score_distrib.csv')
 
     col_names = [col_name for col_name in list(pr_df.columns) if 'Prediction' in col_name]
 

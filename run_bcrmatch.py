@@ -3,6 +3,8 @@ import sys
 import pickle
 import tempfile
 import pandas as pd
+import numpy as np
+import math
 from statsmodels.distributions.empirical_distribution import ECDF
 from bcrmatch_argparser import BCRMatchArgumentParser
 from bcrmatch import bcrmatch_functions, classify_abs
@@ -15,6 +17,8 @@ TCRMATCH_PATH = os.getenv('TCRMATCH_PATH', '/src/bcrmatch')
 BASE_DIR = str(Path(__file__).parent.absolute())
 MODEL_DIR = 'models/models'
 
+import tensorflow as tf
+tf.random.set_seed(42)
 
 def output_result(result_df, output_location, is_verbose):
 	default_columns_to_display = [
@@ -32,6 +36,9 @@ def output_result(result_df, output_location, is_verbose):
 
 	if not is_verbose:
 		result_df = result_df[default_columns_to_display]
+
+	# Round the entire dataframe to 2 sigfigs
+	result_df.iloc[:, 1:] = result_df.iloc[:, 1:].applymap(format_values)
 
 	# Display result to terminal
 	if not output_location:
@@ -58,8 +65,6 @@ def add_mean_percentile_ranks(df):
 		lr_pr = getattr(row, f'_{lr_idx}')
 		gnb_pr = getattr(row, f'_{gnb_idx}')
 		mean = harmonic_mean([lr_pr, gnb_pr])
-		# round it to two decimal places
-		# lr_gnb_mean_col_list.append(round(mean, 2))
 		lr_gnb_mean_col_list.append(mean)
 
 
@@ -68,7 +73,6 @@ def add_mean_percentile_ranks(df):
 		ffnn_pr = getattr(row, f'_{ffnn_idx}')
 		rf_pr = getattr(row, f'_{rf_idx}')
 		mean = harmonic_mean([lr_pr, gnb_pr, xgb_pr, ffnn_pr, rf_pr])
-		# overall_mean_col_list.append(round(mean, 2))
 		overall_mean_col_list.append(mean)
 
 	df['Mean Percentile Rank'] = lr_gnb_mean_col_list
@@ -79,6 +83,8 @@ def add_mean_percentile_ranks(df):
 def load_percentile_rank_dataset(classifier):
 	#TODO: This is technically score distribution and not percentile rank.
 	pkl_path = f'./{MODEL_DIR}/score_distributions/{classifier}.pkl'
+	pkl_path = f'./pickles/score_distributions/{classifier}.pkl'
+
 	with open(pkl_path, 'rb') as f:
 		pr_dataset = pickle.load(f)
 	
@@ -93,7 +99,6 @@ def calculate_percentile_rank(classifier, score):
 
 	ecdf = ECDF(pr_dataset.values)
 
-	# return the percentile rank
 	# NOTE: High score should equal lower ranks
 	return (1 - ecdf(score)) * 100
 
@@ -115,18 +120,25 @@ def predict(complete_score_dict, classifiers, scaler):
 		"FFNN Percentile Rank",
 		# "Mean LR and GNB Percentile Ranks"
 		]
-
+	
+	# NOTE: It needs to be specifically in this order
+	ordered_classifiers = {
+		'rf': classifiers['rf'],
+		'log_reg': classifiers['log_reg'],
+		'gnb': classifiers['gnb'],
+		'xgb': classifiers['xgb'],
+		'ffnn': classifiers['ffnn'],
+	}
+	
+	
 	for ab_pair in complete_score_dict.keys():
 		rowline = []
 		rowline.append(ab_pair)
 
-		# input_data = classify_abs.preprocess_input_data([0.98,1,1,1,1,0.98])
 		input_data = classify_abs.preprocess_input_data(
 			complete_score_dict[ab_pair], scaler)
-		# input_data = classify_abs.preprocess_input_data(
-		# 	complete_score_dict[ab_pair])
-
-		for classifier_name, classifier_obj in classifiers.items():
+		
+		for classifier_name, classifier_obj in ordered_classifiers.items():
 			if classifier_name == 'ffnn':
 				output = classifier_obj.predict(input_data)
 				score = output[0][0]
@@ -136,28 +148,25 @@ def predict(complete_score_dict, classifiers, scaler):
 			
 			# calculate percentile rank
 			percentile_rank = calculate_percentile_rank(classifier_name, score)
-
-			# add score and percentile rank + round it to two decimal places
-			# rowline.append(round(score, 2))
-			# rowline.append(round(percentile_rank, 2))			
-			# rowline.append(score)
-			# rowline.append(percentile_rank)
-			rowline.append(format_values(score))
-			rowline.append(format_values(percentile_rank))
-
+					
+			rowline.append(score)
+			rowline.append(percentile_rank)
+			
 		result.append(rowline)
 
 	return pd.DataFrame(result, columns=result_header)
 
-def format_values(value):
-	import numpy as np
+def format_values(number):
+	num = float(number)
 
-	if value < 0.1:
-        # Format in scientific notation and convert back to numpy.float64
-		return np.float64(f"{value:.6e}")
+	if number == 0.0: return 0.0
+
+	if num < 0.1:
+		# Format to scientific notation with 2 significant digits
+		return "{:.2e}".format(num)
 	else:
-        # Format to 2 decimal places and convert back to numpy.float64
-		return np.float64(f"{value:.2f}")
+		# Calculate the number of significant digits after the decimal
+		return round(num, 2 - int(math.floor(math.log10(abs(num)))) - 1)
 
 def get_classifiers(dataset_name, version, db):
 	df = pd.read_csv(db, sep='\t')
@@ -262,13 +271,32 @@ def get_scoring_dict_from_csv(file_names):
 		* dict_6 = compile_scores("test_cdrl1_iedb_seq_tcroutput.csv")
 	"""
 	all_score_dict = {}
+	dict_1 = None
+	dict_2 = None
+	dict_3 = None
+	dict_4 = None
+	dict_5 = None
+	dict_6 = None
 
-	dict_1 = compile_scores(file_names[0])
-	dict_2 = compile_scores(file_names[1])
-	dict_3 = compile_scores(file_names[2])
-	dict_4 = compile_scores(file_names[3])
-	dict_5 = compile_scores(file_names[4])
-	dict_6 = compile_scores(file_names[5])
+	for each_file in file_names:
+		if 'cdrh1' in each_file:
+			dict_1 = compile_scores(each_file)
+
+		if 'cdrh2' in each_file:
+			dict_2 = compile_scores(each_file)
+		
+		if 'cdrh3' in each_file:
+			dict_3 = compile_scores(each_file)
+
+		if 'cdrl1' in each_file:
+			dict_4 = compile_scores(each_file)
+
+		if 'cdrl2' in each_file:
+			dict_5 = compile_scores(each_file)
+
+		if 'cdrl3' in each_file:
+			dict_6 = compile_scores(each_file)
+
 
 	for pair in dict_1.keys():
 		if pair not in all_score_dict.keys():
@@ -291,23 +319,6 @@ def get_scoring_dict_from_csv(file_names):
 
 
 def get_tcr_output_files(tsv_content) :
-	# [['Seq_Name', 'CDRL1', 'CDRL2', 'CDRL3', 'CDRH1', 'CDRH2', 'CDRH3'], ['1', 'NNIGSKS', 'DDS', 'WDSSSDHA', 'GFTFDDY', 'SWNTGT', 'RSYVVAAEYYFH'], ['2', 'SQDISNY', 'YTS', 'DFTLPF', 'GYTFTNY', 'YPGNGD', 'GGSYRYDGGFD'], ['3', 'ASGNIHN', 'YYT', 'HFWSTPR', 'GFSLTGY', 'WGDGN', 'RDYRLD'], ['4', 'SESVDNYGISF', 'AAS', 'SKEVPL', 'GYTFTSS', 'HPNSGN', 'RYGSPYYFD'], ['5', 'ASQDISN', 'YFT', 'QYSTVPW', 'GYDFTHY', 'NTYTGE', 'PYYYGTSHWYFD']]
-	# for entry in tsv_content :
-
-	# Seq_Name
-	# [1, 2, 3, 4, 5]
-	# CDRL1
-	# ['NNIGSKS', 'SQDISNY', 'ASGNIHN', 'SESVDNYGISF', 'ASQDISN']
-	# CDRL2
-	# ['DDS', 'YTS', 'YYT', 'AAS', 'YFT']
-	# CDRL3
-	# ['WDSSSDHA', 'DFTLPF', 'HFWSTPR', 'SKEVPL', 'QYSTVPW']
-	# CDRH1
-	# ['GFTFDDY', 'GYTFTNY', 'GFSLTGY', 'GYTFTSS', 'GYDFTHY']
-	# CDRH2
-	# ['SWNTGT', 'YPGNGD', 'WGDGN', 'HPNSGN', 'NTYTGE']
-	# CDRH3
-	# ['RSYVVAAEYYFH', 'GGSYRYDGGFD', 'RDYRLD', 'RYGSPYYFD', 'PYYYGTSHWYFD']
 	tcrout_filenames = []
 	sequence_name_key = list(tsv_content.keys())[0]
 	sequence_names = tsv_content[sequence_name_key]
@@ -316,13 +327,13 @@ def get_tcr_output_files(tsv_content) :
 		# Skip sequence names
 		if k == sequence_name_key :
 			continue
-
+		
 		seq_dict = {}
-		for i in range(len(sequence_names)):
+		for i in range(len(sequence_names)-1):
 			seq_dict[str(sequence_names[i])] = v[i]
 		
 		# Create temporary file containing 'seq_dict' to be used as input for TCRMatch
-		with tempfile.NamedTemporaryFile(mode='w', prefix='tcr_', suffix='_input', delete=False) as tmp:
+		with tempfile.NamedTemporaryFile(mode='w', prefix=f'{k.lower()}_', suffix='_tcrinput', delete=False) as tmp:
 			tmp.write('\n'.join(list(seq_dict.values())))
 
 		# Run TCRMatch
@@ -336,7 +347,7 @@ def get_tcr_output_files(tsv_content) :
 		# Format the results into a file
 		tcr_output_result = bcrmatch_functions.create_tcroutput(stdoutdata, seq_dict)
 
-		with tempfile.NamedTemporaryFile(mode='w', prefix='tcr_', suffix='_output', delete=False) as tmp:
+		with tempfile.NamedTemporaryFile(mode='w', prefix=f'{k.lower()}_', suffix='_tcroutput', delete=False) as tmp:
 			tmp.write(tcr_output_result)
 			tcrout_filenames.append(tmp.name)
 			
@@ -497,7 +508,9 @@ def main():
 
 	print("Retrieve scores...")
 	score_dict = get_scoring_dict_from_csv(tcrout_files)
-
+	# test_df = pd.DataFrame(score_dict)
+	# test_df.to_csv('score_dict_data.csv', index=False)
+	
 	classifiers = get_classifiers(dataset_name, dataset_ver, db=dataset_db)
 
 	result_df = predict(score_dict, classifiers, scaler)

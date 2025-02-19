@@ -39,8 +39,10 @@ def create_tcroutput(outdata, seq_id_dict):
 
 	# Turn 'outdata' (str) to dictionary
 	outdata_list = outdata.split('\n')
-	for each_data in outdata_list :
-		seq1, seq2, score = each_data.split(' ')
+	for i, each_data in enumerate(outdata_list) :
+		if i == 0 : continue
+
+		seq1, seq2, score = each_data.split('\t')[:3]
 
 		if seq1 not in tcr_details:
 			tcr_details[seq1] = {}
