@@ -27,16 +27,13 @@ build:
     - docker:19.03.12-dind
   script:
     docker build -t bcrmatch_img .
-  artifacts:
-    paths:
-      - /var/lib/docker
 
 
 test:
   stage: test
-  image: bcrmatch_img  # Use the image built in the previous step
+  image: docker:19.03.12-dind
   script:
-    - python -m unittest discover /src/bcrmatch/tests -s test_basic_prediction.py
+    - docker run --rm bcrmatch_img python -m unittest discover /src/bcrmatch/tests -s test_basic_prediction.py  # Run the unit tests inside the container
 
 
 deploy:
