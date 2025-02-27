@@ -26,7 +26,12 @@ build:
   services:
     - docker:19.03.12-dind
   script:
-    docker build -t bcrmatch_img .
+    - docker build -t bcrmatch_img .
+    - docker save -o bcrmatch_img.tar bcrmatch_img
+  artifacts:
+    paths:
+      - bcrmatch_img.tar
+    expire_in: 30 minutes
 
 
 test:
@@ -35,7 +40,7 @@ test:
   services:
     - docker:19.03.12-dind
   script:
-    - docker pull bcrmatch_img
+    - docker load -i bcrmatch_img.tar
     - docker run --rm bcrmatch_img python -m unittest discover /src/bcrmatch/tests -s test_basic_prediction.py  # Run the unit tests inside the container
 
 
