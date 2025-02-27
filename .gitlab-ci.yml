@@ -1,21 +1,45 @@
 stages:
-  - tbuild
-  - test
   - build
-
-test_container:
-  stage: test
-  image: docker:19.03.12-dind
-  services:
-    - docker:19.03.12-dind
-  variables:
-    DOCKER_IMG: harbor.lji.org/iedb-public/bcrmatch:$CI_COMMIT_TAG
-  script:
+  - test
+  - deploy
 
 
 # build and push the container to harbor when a tag is created
-build_container:
+# build:
+#   stage: build
+#   image: docker:19.03.12-dind
+#   services:
+#     - docker:19.03.12-dind
+#   variables:
+#     DOCKER_IMG: harbor.lji.org/iedb-public/bcrmatch:$CI_COMMIT_TAG
+#   script:
+#     # - docker logout $DOCKER_IMG
+#     # - docker login -u $HARBOR_USER -p $HARBOR_PWD $DOCKER_IMG
+#     - docker build -t $DOCKER_IMG .
+#   #   - docker push $DOCKER_IMG
+#   # rules:
+#   #   # run this only for tags
+#   #   - if: '$CI_COMMIT_TAG'
+build:
   stage: build
+  image: docker:19.03.12-dind
+  services:
+    - docker:19.03.12-dind
+  scripts:
+    docker build -t bcrmatch_img .
+  artifacts:
+    paths:
+      - /var/lib/docker
+
+
+test:
+  stage: test
+  image: bcrmatch_img  # Use the image built in the previous step
+  script:
+    - python -m unittest discover /src/bcrmatch/tests -s test_basic_prediction.py
+
+
+deploy:
   image: docker:19.03.12-dind
   services:
     - docker:19.03.12-dind
@@ -24,9 +48,8 @@ build_container:
   script:
     - docker logout $DOCKER_IMG
     - docker login -u $HARBOR_USER -p $HARBOR_PWD $DOCKER_IMG
-    - docker build -t $DOCKER_IMG .
+    - docker tag bcrmatch_img $DOCKER_IMG
     - docker push $DOCKER_IMG
-  rules:
-    # run this only for tags
-    - if: '$CI_COMMIT_TAG'
-
+  only:
+    - tags
+  when: on_success
