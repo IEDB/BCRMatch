@@ -22,7 +22,7 @@ stages:
 #   #   - if: '$CI_COMMIT_TAG'
 build:
   stage: build
-  image: docker:19.03.12-dind
+  image: docker:20:10.7
   services:
     - docker:19.03.12-dind
   script:
@@ -31,13 +31,16 @@ build:
 
 test:
   stage: test
-  image: docker:19.03.12-dind
+  image: docker:20:10.7
+  services:
+    - docker:19.03.12-dind
   script:
+    - docker pull bcrmatch_img
     - docker run --rm bcrmatch_img python -m unittest discover /src/bcrmatch/tests -s test_basic_prediction.py  # Run the unit tests inside the container
 
 
 deploy:
-  image: docker:19.03.12-dind
+  image: docker:20:10.7
   services:
     - docker:19.03.12-dind
   variables:
