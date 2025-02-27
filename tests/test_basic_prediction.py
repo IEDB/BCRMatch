@@ -26,9 +26,17 @@ def find_root_dir(start_dir=None, anchor_files=None):
     
     # Traverse up the directory tree until an anchor file is found or root is reached
     while current_dir != os.path.dirname(current_dir):
+        # Check for anchor files in the current directory
         for anchor in anchor_files:
             if os.path.isfile(os.path.join(current_dir, anchor)) or os.path.isdir(os.path.join(current_dir, anchor)):
                 return current_dir  # Return the directory where the anchor file is found
+
+        # Check for anchor files in child directories
+        for root, dirs, files in os.walk(current_dir):
+            for anchor in anchor_files:
+                if anchor in dirs or anchor in files:
+                    return root  # Return the child directory where the anchor file is found
+
         current_dir = os.path.dirname(current_dir)  # Move up one level
     
     # If no anchor file is found, return None or raise an error
@@ -46,28 +54,33 @@ def delete_folders_with_prefix(root_dir, prefix="9999"):
 
 
 class TestBasicPrediction(unittest.TestCase):
-    dataset = 'abpairs_abligity_imgt_20240916_hk'
+    app_dir = find_root_dir()
     python_path = '/usr/bin/python3'
-    example_dir = 'tests/examples'
+    test_dir = f'{app_dir}/tests'
+    example_dir = f'{test_dir}/examples-a'
     output_file_to_delete = ''  
 
     def test_abpairs_abligity(self):
         today = datetime.date.today().strftime('%Y%m%d')
         training_version = f"9999{today}"
-        output_file = "tests/test_output.csv"
-        ground_truth_file = 'tests/ground_truth_abpair_abligity.csv'
+        output_file = f"{self.test_dir}/test_output.csv"
+        dataset_name = 'abpairs_abligity_imgt_20240916_hk'
+        dataset = f'{self.app_dir}/{dataset_name}.csv'
+        ground_truth_file = f'{self.example_dir}/ground_truth_abpair_abligity.csv'
         self.output_file_to_delete = output_file
 
         # Training
         command = [
             self.python_path, 
-            "run_bcrmatch.py", 
+            f"{self.app_dir}/run_bcrmatch.py", 
             "-tm", 
-            "-tc", f"{self.dataset}.csv", 
+            "-tc", dataset, 
             # 9999 to indicate that it's a test
             "-tv", training_version,
             "-f",
         ]
+
+        # print(command)
 
         # Call the program and capture output (stdout and stderr)
         result = subprocess.run(command, capture_output=True, text=True)
@@ -83,14 +96,16 @@ class TestBasicPrediction(unittest.TestCase):
         # Prediction
         command = [
             self.python_path,  # the Python executable
-            "run_bcrmatch.py",  # the script to run
+            f"{self.app_dir}/run_bcrmatch.py", 
             "-ch", f"{self.example_dir}/cdrh1_input.fasta", f"{self.example_dir}/cdrh2_input.fasta", f"{self.example_dir}/cdrh3_input.fasta",  # cdrh arguments
             "-cl", f"{self.example_dir}/cdrl1_input.fasta", f"{self.example_dir}/cdrl2_input.fasta", f"{self.example_dir}/cdrl3_input.fasta",  # cdrl arguments
-            "-tn", self.dataset,  # training name
+            "-tn", dataset_name,  # training name
             "-tv", training_version,  # training version
             "-v",  # verbosity flag
             "-o", output_file,
         ]
+
+        # print(command)
 
         result = subprocess.run(command, capture_output=True, text=True)
         # Check the result
@@ -160,14 +175,13 @@ class TestBasicPrediction(unittest.TestCase):
 
     def tearDown(self):
         # Example usage
-        root_dir = find_root_dir()
-        if root_dir:
-            print(f"App root directory is: {root_dir}")
+        if self.app_dir:
+            print(f"App root directory is: {self.app_dir}")
         else:
             print("Root directory not found.")
 
         # Delete all the models folder that has been created
-        delete_folders_with_prefix(f'{root_dir}/models', prefix='9999')
+        delete_folders_with_prefix(f'{self.app_dir}/models', prefix='9999')
 
         # Delete the output file that was created
         if os.path.isfile(self.output_file_to_delete):
@@ -176,7 +190,7 @@ class TestBasicPrediction(unittest.TestCase):
 
 def  main():
     tester = TestBasicPrediction()
-    tester.basic_prediction_abpairs_abligity()
+    tester.test_abpairs_abligity()
 
 if __name__=='__main__':
     unittest.main()

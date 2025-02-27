@@ -22,9 +22,11 @@ class BCRMatchArgumentParser:
     _list_datasets_flag = False
     _output_location = ''
     _verbose = False
+    _root_dir = ''
 
     def __init__(self):
-        pass
+        self._root_dir = self.find_root_dir()
+        print(self._root_dir)
 
     def parse_args(self, args):
         # Optional Arguments (Flags)
@@ -141,6 +143,35 @@ class BCRMatchArgumentParser:
         return self.parser.parse_args(), self.parser
     
 
+    def find_root_dir(self, start_dir=None, anchor_files=None):
+        """Find the app root directory by looking for known anchor files."""
+        if start_dir is None:
+            start_dir = os.getcwd()  # Default to the current working directory
+        
+        if anchor_files is None:
+            anchor_files = ['LICENSE']
+        
+        # Normalize to absolute path
+        current_dir = os.path.abspath(start_dir)
+        
+        # Traverse up the directory tree until an anchor file is found or root is reached
+        while current_dir != os.path.dirname(current_dir):
+            # Check for anchor files in the current directory
+            for anchor in anchor_files:
+                if os.path.isfile(os.path.join(current_dir, anchor)) or os.path.isdir(os.path.join(current_dir, anchor)):
+                    return current_dir  # Return the directory where the anchor file is found
+
+            # Check for anchor files in child directories
+            for root, dirs, files in os.walk(current_dir):
+                for anchor in anchor_files:
+                    if anchor in dirs or anchor in files:
+                        return root  # Return the child directory where the anchor file is found
+
+            current_dir = os.path.dirname(current_dir)  # Move up one level
+        
+        # If no anchor file is found, return None or raise an error
+        return None
+
     def get_input_tsv_content(self, args) :
         ''' DESCRIPTION:
             This will open the TSV file and return its content.
@@ -255,6 +286,9 @@ class BCRMatchArgumentParser:
     def get_models_dir(self):
         return self._models_dir
     
+    def get_root_dir(self):
+        return self._root_dir
+    
     def get_output_file_location(self):
         return self._output_location
     
@@ -302,14 +336,16 @@ class BCRMatchArgumentParser:
 
     def set_database(self, args):
         db_path = getattr(args, 'database')
-        self._dataset_db = db_path
+        self._dataset_db = f'{self._root_dir}/{db_path}'
 
     def set_models_dir(self, args):
         models_dir = getattr(args, 'models_dir')
-        if models_dir[::-1] != '/':
-            models_dir = models_dir + '/'
-            
-        self._models_dir = models_dir
+
+        # Make sure the path has no trailing '/'
+        if models_dir.endswith(os.sep):
+            models_dir = models_dir[:-1]
+        
+        self._models_dir = f'{self._root_dir}/{models_dir}'
 
     def set_output_file_location(self, args):
         output_loc = getattr(args, 'output')

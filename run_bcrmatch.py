@@ -82,8 +82,7 @@ def add_mean_percentile_ranks(df):
 
 def load_percentile_rank_dataset(classifier):
 	#TODO: This is technically score distribution and not percentile rank.
-	pkl_path = f'./{MODEL_DIR}/score_distributions/{classifier}.pkl'
-	pkl_path = f'./pickles/score_distributions/{classifier}.pkl'
+	pkl_path = f'{BASE_DIR}/pickles/score_distributions/{classifier}.pkl'
 
 	with open(pkl_path, 'rb') as f:
 		pr_dataset = pickle.load(f)
@@ -176,7 +175,7 @@ def get_classifiers(dataset_name, version, db):
 	classifiers = {}
 
 	for i, row in filtered_df.iterrows():
-		pkl_path = '%s/%s/%s' %(BASE_DIR, MODEL_DIR, row['pickle_file'])
+		pkl_path = '%s/%s' %(MODEL_DIR, row['pickle_file'])
 		classifier = row['model']
 
 		try:
@@ -189,12 +188,13 @@ def get_classifiers(dataset_name, version, db):
 	return classifiers
 
 def get_models_dir_path(dataset, version):
-	return '%s/%s/%s/%s' %(BASE_DIR, MODEL_DIR, dataset, version)
+	# return '%s/%s/%s/%s' %(BASE_DIR, MODEL_DIR, dataset, version)
+	return f'{MODEL_DIR}/{dataset}/{version}'
 
 def save_scaler(dataset, version, scaler):
 	print("Pickling scaler object...")
 	base_path = get_models_dir_path(dataset, version)
-	pkl_file_path = '%s/scaler.pkl' %(base_path)
+	pkl_file_path = f'{base_path}/scaler.pkl'
 
 	with open(pkl_file_path, 'wb') as f:
 		pickle.dump(scaler, f)
@@ -385,10 +385,6 @@ def start_training_mode(parser):
 	training_dataset_version = parser.get_training_dataset_version()
 	force_retrain = parser.get_force_retrain_flag()
 	database_db = parser.get_database()
-	models_dir = parser.get_models_dir()
-
-	global MODEL_DIR
-	MODEL_DIR = models_dir
 	
 	# Check existence of dataset db
 	if Path(database_db).is_file():
@@ -474,6 +470,18 @@ def main():
 
 	# Basic validation and prep on all the params(flags)
 	bcrmatch_parser.validate(args)
+
+	# Set BASE_DIR (config step)
+	global BASE_DIR
+	BASE_DIR = bcrmatch_parser.get_root_dir()
+
+	global MODEL_DIR
+	MODEL_DIR = bcrmatch_parser.get_models_dir()
+
+	print('-----------------------------')
+	print(f'BASE MODEL: {BASE_DIR}')
+	print(f'MODEL DIR: {MODEL_DIR}')
+	print('-----------------------------')
 
 	dataset_db = bcrmatch_parser.get_database()
 
