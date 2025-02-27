@@ -37,12 +37,10 @@ stages:
 test:
   stage: test
   image: python:3.8.5
-  services:
-    - docker:19.03.12-dind
   script:
     - pip install -r requirements.txt
     - pwd
-    - python -m unittest discover tests -s test_basic_prediction.py
+    - python -m unittest discover -s tests
     # - docker load -i bcrmatch_img.tar
     # - docker run --rm bcrmatch_img python -m unittest discover /src/bcrmatch/tests -s test_basic_prediction.py  # Run the unit tests inside the container
 
