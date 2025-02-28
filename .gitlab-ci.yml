@@ -1,11 +1,10 @@
 stages:
-  - build
   - test
-  - push
+  - deploy
 
-# Build the container
-build_container:
-  stage: build
+# build and push the container to harbor when a tag is created
+test_container:
+  stage: test
   image: docker:19.03.12-dind
   services:
     - docker:19.03.12-dind
@@ -15,35 +14,21 @@ build_container:
     - docker logout $DOCKER_IMG
     - docker login -u $HARBOR_USER -p $HARBOR_PWD $DOCKER_IMG
     - docker build -t bcrmatch_img .
-    - docker save bcrmatch_img | gzip > bcrmatch_img.tar.gz  # Save the image as a tarball for later use
-  artifacts:
-    paths:
-      - bcrmatch_img.tar.gz
-    expire_in: 30 minutes
-
-# Run tests in the built container
-test_container:
-  stage: test
-  image: docker:19.03.12-dind
-  services:
-    - docker:19.03.12-dind
-  dependencies:
-    - build_container
-  script:
-    - docker load < bcrmatch_img.tar.gz  # Load the Docker image from the tarball
     - docker run --rm bcrmatch_img bash -c "python3 pickle_score_distributions.py && python3 -m unittest discover -s tests"
 
-# Push the container to Harbor after tests pass
 push_container:
-  stage: push
+  stage: deploy
   image: docker:19.03.12-dind
   services:
     - docker:19.03.12-dind
-  dependencies:
-    - build_container  
-    - test_container
+  variables:
+    DOCKER_IMG: harbor.lji.org/iedb-public/bcrmatch:$CI_COMMIT_TAG
   script:
-    - docker load < bcrmatch_img.tar.gz  # Load the Docker image again
-    - docker tag bcrmatch_img $DOCKER_IMG  # Tag the image with the proper name
-    - docker push $DOCKER_IMG  # Push the image to Harbor
+    - docker logout $DOCKER_IMG
+    - docker login -u $HARBOR_USER -p $HARBOR_PWD $DOCKER_IMG
+    - docker build -t $DOCKER_IMG .
+    - docker push $DOCKER_IMG
+  rules:
+    # run this only for tags
+    - if: '$CI_COMMIT_TAG'
   when: manual
