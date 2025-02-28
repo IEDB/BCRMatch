@@ -56,7 +56,8 @@ def delete_folders_with_prefix(root_dir, prefix="9999"):
 
 class TestBasicPrediction(unittest.TestCase):
     app_dir = find_root_dir()
-    python_path = '/usr/bin/python3'
+    # python_path = '/usr/bin/python3'
+    python_path = sys.executable
     test_dir = f'{app_dir}/tests'
     example_dir = f'{test_dir}/examples-a'
     output_file_to_delete = ''  
