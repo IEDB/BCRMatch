@@ -13,7 +13,9 @@ build_container:
     - docker logout $DOCKER_IMG
     - docker login -u $HARBOR_USER -p $HARBOR_PWD $DOCKER_IMG
     - docker build -t bcrmatch_img .
-    - docker run --rm bcrmatch_img python3 -m unittest discover -s tests
+    # - docker run --rm bcrmatch_img python3 -m unittest discover -s tests
+    - docker run --rm bcrmatch_img bash -c "python3 pickle_score_distributions.py && python3 -m unittest discover -s tests"
+
     # - docker push $DOCKER_IMG 
   # rules:
   #   # run this only for tags
