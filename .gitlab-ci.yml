@@ -1,25 +1,20 @@
 stages:
   - build
-  - test
 
-variables:
-  DOCKER_IMAGE_NAME: your-docker-image-name
-  DOCKERFILE_PATH: ./Dockerfile
-  TEST_COMMAND: python -m unittest discover
-
-build-docker-image:
+# build and push the container to harbor when a tag is created
+build_container:
   stage: build
-  image: docker:latest
+  image: docker:19.03.12-dind
   services:
-    - docker:dind
-  before_script:
-    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - docker:19.03.12-dind
+  variables:
+    DOCKER_IMG: harbor.lji.org/iedb-public/bcrmatch:$CI_COMMIT_TAG
   script:
-    - docker build -t $DOCKER_IMAGE_NAME -f $DOCKERFILE_PATH .
-    - docker push $DOCKER_IMAGE_NAME
-
-run-unit-tests:
-  stage: test
-  image: $DOCKER_IMAGE_NAME
-  script:
-    - $TEST_COMMAND
+    - docker logout $DOCKER_IMG
+    - docker login -u $HARBOR_USER -p $HARBOR_PWD $DOCKER_IMG
+    - docker build -t $DOCKER_IMG .
+    - docker run --rm $DOCKER_IMG python3 -m unittest discover -s tests
+    # - docker push $DOCKER_IMG 
+  # rules:
+  #   # run this only for tags
+  #   - if: '$CI_COMMIT_TAG'
