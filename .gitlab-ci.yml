@@ -6,6 +6,7 @@ stages:
   before_script:
     - python3 -V
     - pip install -r requirements.txt
+    - sh dataset-download.sh
 
 prepare:
     extends: ['.template_job']
@@ -16,6 +17,7 @@ prepare:
       - ls /builds/iedb/tools/tools-redesign/command-line/BCRMatch/
       - ls /builds/iedb/tools/tools-redesign/command-line/BCRMatch/tests/
       - ls /builds/iedb/tools/tools-redesign/command-line/BCRMatch/tests/examples-b/
+      - python3 pickle_score_distributions.py
       - python3 -m unittest discover -s tests
 
   
