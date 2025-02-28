@@ -16,6 +16,10 @@ build_container:
     - docker login -u $HARBOR_USER -p $HARBOR_PWD $DOCKER_IMG
     - docker build -t bcrmatch_img .
     - docker save bcrmatch_img | gzip > bcrmatch_img.tar.gz  # Save the image as a tarball for later use
+  artifacts:
+    paths:
+      - bcrmatch_img.tar.gz
+    expire_in: 30 minutes
 
 # Run tests in the built container
 test_container:
