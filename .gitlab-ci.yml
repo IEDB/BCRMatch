@@ -11,6 +11,11 @@ prepare:
     extends: ['.template_job']
     stage: test
     script:
+      - pwd
+      - ls .
+      - ls /builds/iedb/tools/tools-redesign/command-line/BCRMatch/
+      - ls /builds/iedb/tools/tools-redesign/command-line/BCRMatch/tests/
+      - ls /builds/iedb/tools/tools-redesign/command-line/BCRMatch/tests/examples-b/
       - python3 -m unittest discover -s tests
 
   
