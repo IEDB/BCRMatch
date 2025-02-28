@@ -1,86 +1,25 @@
 stages:
-    - test
+  - build
+  - test
 
-.template_job:
-  image: python:3.9-slim-buster
+variables:
+  DOCKER_IMAGE_NAME: your-docker-image-name
+  DOCKERFILE_PATH: ./Dockerfile
+  TEST_COMMAND: python -m unittest discover
+
+build-docker-image:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
   before_script:
-    - python3 -V
-    - pip install -r requirements.txt
-    - apt-get update && apt-get install -y wget
-    - sh download-latest-models.sh
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+  script:
+    - docker build -t $DOCKER_IMAGE_NAME -f $DOCKERFILE_PATH .
+    - docker push $DOCKER_IMAGE_NAME
 
-prepare:
-    extends: ['.template_job']
-    stage: test
-    script:
-      - pwd
-      - ls .
-      - ls /builds/iedb/tools/tools-redesign/command-line/BCRMatch/
-      - ls /builds/iedb/tools/tools-redesign/command-line/BCRMatch/tests/
-      - ls /builds/iedb/tools/tools-redesign/command-line/BCRMatch/tests/examples-b/
-      - python3 pickle_score_distributions.py
-      - python3 -m unittest discover -s tests
-
-  
-# build and push the container to harbor when a tag is created
-# build:
-#   stage: build
-#   image: docker:19.03.12-dind
-#   services:
-#     - docker:19.03.12-dind
-#   variables:
-#     DOCKER_IMG: harbor.lji.org/iedb-public/bcrmatch:$CI_COMMIT_TAG
-#   script:
-#     # - docker logout $DOCKER_IMG
-#     # - docker login -u $HARBOR_USER -p $HARBOR_PWD $DOCKER_IMG
-#     - docker build -t $DOCKER_IMG .
-#   #   - docker push $DOCKER_IMG
-#   # rules:
-#   #   # run this only for tags
-#   #   - if: '$CI_COMMIT_TAG'
-# build:
-#   stage: build
-#   image: docker:19.03.12-dind
-#   services:
-#     - docker:19.03.12-dind
-#   script:
-#     - docker build -t bcrmatch_img .
-#     - docker save -o bcrmatch_img.tar bcrmatch_img
-#   artifacts:
-#     paths:
-#       - bcrmatch_img.tar
-#     expire_in: 30 minutes
-
-
-# test:
-#   stage: test
-#   image: python:3.8.5
-#   script:
-#     - python -m venv venv
-#     - source venv/bin/activate
-#     - pip3 install --no-cache-dir -r requirements.txt
-#     - pwd
-#     - pip install pandas
-#     - pip show pandas
-#     - ls .
-#     - which python
-#     - which python3
-#     - python3 -m unittest discover -s tests
-#     # - docker load -i bcrmatch_img.tar
-#     # - docker run --rm bcrmatch_img python -m unittest discover /src/bcrmatch/tests -s test_basic_prediction.py  # Run the unit tests inside the container
-
-
-# deploy:
-#   image: docker:19.03.12-dind
-#   services:
-#     - docker:19.03.12-dind
-#   variables:
-#     DOCKER_IMG: harbor.lji.org/iedb-public/bcrmatch:$CI_COMMIT_TAG
-#   script:
-#     - docker logout $DOCKER_IMG
-#     - docker login -u $HARBOR_USER -p $HARBOR_PWD $DOCKER_IMG
-#     - docker tag bcrmatch_img $DOCKER_IMG
-#     - docker push $DOCKER_IMG
-#   only:
-#     - tags
-#   when: on_success
+run-unit-tests:
+  stage: test
+  image: $DOCKER_IMAGE_NAME
+  script:
+    - $TEST_COMMAND
