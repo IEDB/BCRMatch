@@ -18,7 +18,7 @@ def main():
     # pr_df = pd.concat([df1, df2], axis=0)
 
     # pr_df = pd.read_csv('output_iedb_sarscov2_combined_newtrain_score_distrib.csv')
-    pr_df = pd.read_csv('updated_score_distributions_for_percentile_with_fixed_tf_seed.csv')
+    pr_df = pd.read_csv('updated_score_distributions_for_percentile_with_fixed_tf_seed_v2.csv')
     
     col_names = [col_name for col_name in list(pr_df.columns) if 'Prediction' in col_name]
 

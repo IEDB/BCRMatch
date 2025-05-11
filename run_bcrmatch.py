@@ -329,9 +329,9 @@ def get_tcr_output_files(tsv_content) :
 			continue
 		
 		seq_dict = {}
-		for i in range(len(sequence_names)-1):
+		for i in range(len(sequence_names)):
 			seq_dict[str(sequence_names[i])] = v[i]
-		
+
 		# Create temporary file containing 'seq_dict' to be used as input for TCRMatch
 		with tempfile.NamedTemporaryFile(mode='w', prefix=f'{k.lower()}_', suffix='_tcrinput', delete=False) as tmp:
 			tmp.write('\n'.join(list(seq_dict.values())))
@@ -445,9 +445,11 @@ def get_csv_file_path(dataset_name, version, db):
 	
 
 def get_standard_scaler(dataset, version):
-	# Create directories recursively even if they don't exists
+	# Create directories recursively
 	base_path = get_models_dir_path(dataset, version)
 	path = Path(base_path)
+	if not os.path.isdir(path):
+		raise NotADirectoryError(f'Directory Not Found: {base_path}')
 	path.mkdir(parents=True, exist_ok=True)
 
 	pkl_file_name = 'scaler.pkl'
