@@ -41,4 +41,6 @@ RUN echo "source activate myenv" > ~/.bashrc
 # Make the environment available in the shell by sourcing the Conda setup
 SHELL ["/bin/bash", "-c"]
 
+ENV CONTAINER_TYPE=anarci
+
 CMD ["sh", "-c", "python3 run_bcrmatch.py ${BCRMATCH_ARGS}"]

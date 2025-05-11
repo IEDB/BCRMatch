@@ -1,8 +1,22 @@
-import argparse
-import textwrap
-import pandas as pd
 import os
+import sys
+import argparse
+import pandas as pd
+import textwrap
 from pathlib import Path
+
+def is_running_in_anarci_docker():
+    try:
+        if os.path.exists('/.dockerenv') and os.getenv('CONTAINER_TYPE') == 'anarci':
+            return True
+    except:
+        pass
+    return False
+
+# Only import get_cdr_table if running in anarci Docker
+if is_running_in_anarci_docker():
+    from anarci_input_converter import get_cdr_table
+
 
 class BCRMatchArgumentParser:
     parser = argparse.ArgumentParser(
@@ -26,7 +40,6 @@ class BCRMatchArgumentParser:
 
     def __init__(self):
         self._root_dir = self.find_root_dir()
-        print(self._root_dir)
 
     def parse_args(self, args):
         # Optional Arguments (Flags)
@@ -61,6 +74,23 @@ class BCRMatchArgumentParser:
                             type = argparse.FileType('r'),
                             default = argparse.SUPPRESS,
                             help = 'FASTA file containing 3 CDRLs.')
+        
+        # Only add full chain FASTA arguments if running in anarci Docker
+        if is_running_in_anarci_docker():
+            self.parser.add_argument('--full-heavy-chain-fasta', '-fh', 
+                                dest = 'full_heavy_fasta', 
+                                required = False,
+                                nargs = 1, 
+                                type = argparse.FileType('r'),
+                                default = argparse.SUPPRESS,
+                                help = 'Full length heavy sequences in FASTA format.')
+            self.parser.add_argument('--full-light-chain-fasta', '-fl', 
+                                dest = 'full_light_fasta', 
+                                required = False,
+                                nargs = 1, 
+                                type = argparse.FileType('r'),
+                                default = argparse.SUPPRESS,
+                                help = 'Full length light sequences in FASTA format.')
         self.parser.add_argument('--database', '-db', 
                             dest = 'database', 
                             required = False,
@@ -172,6 +202,19 @@ class BCRMatchArgumentParser:
         # If no anchor file is found, return None or raise an error
         return None
 
+    def get_anarci_input_to_tsv(self, args):
+        ''' DESCRIPTION:
+            Takes two FASTA files: one full heavy sequences FASTA and one full light sequences FASTA file. 
+            This then uses ANARCI to pull out the CDRL and CDRH sequences and creates a table.
+        '''
+        if not is_running_in_anarci_docker():
+            raise NotImplementedError("ANARCI functionality is only available when running in the anarci Docker container")
+            
+        full_heavy_file = getattr(args, 'full_heavy_fasta')[0]
+        full_light_file = getattr(args, 'full_light_fasta')[0]
+        df = get_cdr_table(full_heavy_file.name, full_light_file.name)
+        return df
+    
     def get_input_tsv_content(self, args) :
         ''' DESCRIPTION:
             This will open the TSV file and return its content.
@@ -199,14 +242,30 @@ class BCRMatchArgumentParser:
         '''
         _NUM_FASTA_FILES = 3
 
+        # CASE 1: User provides TSV file
         if 'input_tsv' in args:
             return self.get_input_tsv_content(args)
 
+        # CASE 2: User provides full heavy and light fasta files (total 2 files)
+        if is_running_in_anarci_docker():
+            if 'full_heavy_fasta' in args and 'full_light_fasta' not in args:
+                raise parser.error('missing full light file')
+
+            if 'full_light_fasta' in args and 'full_heavy_fasta' not in args:
+                raise parser.error('missing full heavy file')
+
+            if 'full_light_fasta' in args and 'full_heavy_fasta' in args:
+                return self.get_anarci_input_to_tsv(args)
+        else:
+            if 'full_heavy_fasta' in args or 'full_light_fasta' in args:
+                raise parser.error('Full chain FASTA input is only available when running in the anarci Docker container')
+        
+        # CASE 3: User provides 3 CDRL FASTA files and 3 CDRH FASTA files
         # Check if cdrh/cdrl flags are specified.
-        if 'cdrh_fasta' not in args :
+        if 'cdrh_fasta' not in args:
             raise parser.error('Please provide FASTA files containing CDRH sequences.')
         
-        if 'cdrl_fasta' not in args :
+        if 'cdrl_fasta' not in args:
             raise parser.error('Please provide FASTA files containing CDRL sequences.')
         
         # Check if 3 fasta files are provided for each cdrh and cdrl flags.

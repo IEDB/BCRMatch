@@ -1,6 +1,7 @@
 # from path import Path
 import pandas as pd
 from anarci import run_anarci
+import argparse
 
 
 def extract_cdr(sequence, region):
@@ -85,11 +86,16 @@ def get_cdr_table(heavy_file, light_file):
     
 
 def main():
-    heavy_chain_fasta_file = 'examples/heavy_chain_seq_input.fasta'
+    heavy_chain_fasta_file = 'examples/set-a/heavy_chain_seq_input.fasta'
+    light_chain_fasta_file = 'examples/set-a/light_chain_seq_input.fasta'
 
-    light_chain_fasta_file = 'examples/light_chain_seq_input.fasta'
-
+    heavy_chain_fasta_file = 'examples/set-c/updated_example_vh_seqs.fasta'
+    light_chain_fasta_file = 'examples/set-c/updated_example_vl_seqs.fasta'
+    
     df = get_cdr_table(heavy_chain_fasta_file, light_chain_fasta_file)
+    
+    # Convert dictionary to DataFrame and print
+    df = pd.DataFrame(df)
     print(df.to_string())
 
 

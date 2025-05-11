@@ -195,6 +195,28 @@ One row per antibody and a set of two columns per predictor:
 * The ``Prediction`` column indicates the score for the given predictor (higher is better).
 * The ``Percentile Rank`` column indicates the rank of the score within a set of ~300,000 random scores (Range: 0-100; lower is better).
 
+
+## Anarci
+
+To use ANARCI functionality for processing full heavy and light chain sequences:
+
+1. Build the Docker container using the anarci.Dockerfile:
+   ```bash
+   docker build -t bcrmatch-anarci -f anarci.Dockerfile .
+   ```
+
+2. Run the container and access its shell:
+   ```bash
+   docker run -it bcrmatch-anarci /bin/bash
+   ```
+
+3. Inside the container, run BCRMatch with your full chain sequences:
+   ```bash
+   python run_bcrmatch.py -fh examples/set-c/updated_example_vh_seqs.fasta -fl examples/set-c/updated_example_vl_seqs.fasta -tn abpairs_abligity
+   ```
+
+Note: The ANARCI functionality is only available when running inside the anarci Docker container. If you try to use the `-fh` and `-fl` options outside the container, you will receive an error message.
+
 ### Training
 
 This step is only necessary if you have a custom dataset upon which to train.  Otherwise, it is recommended to download the pre-trained
