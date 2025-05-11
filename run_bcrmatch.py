@@ -35,10 +35,10 @@ def output_result(result_df, output_location, is_verbose):
 	]
 
 	if not is_verbose:
-		result_df = result_df[default_columns_to_display]
+		result_df = result_df[default_columns_to_display].copy()
 
 	# Round the entire dataframe to 2 sigfigs
-	result_df.iloc[:, 1:] = result_df.iloc[:, 1:].applymap(format_values)
+	result_df.loc[:, result_df.columns[1:]] = result_df.iloc[:, 1:].applymap(format_values)
 
 	# Display result to terminal
 	if not output_location:
