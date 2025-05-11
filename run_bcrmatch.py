@@ -380,11 +380,11 @@ def start_training_mode(parser):
 	#   * training-dataset-csv
 	#   * training-dataset-name
 	#   * training-dataset-version
-	training_dataset_file = parser.get_training_dataset()
-	training_dataset_name = parser.get_training_dataset_name()
-	training_dataset_version = parser.get_training_dataset_version()
-	force_retrain = parser.get_force_retrain_flag()
-	database_db = parser.get_database()
+	training_dataset_file = parser.training_dataset
+	training_dataset_name = parser.training_dataset_name
+	training_dataset_version = parser.training_dataset_version
+	force_retrain = parser.force_retrain_flag
+	database_db = parser.database
 	
 	# Check existence of dataset db
 	if Path(database_db).is_file():
@@ -475,26 +475,26 @@ def main():
 
 	# Set BASE_DIR (config step)
 	global BASE_DIR
-	BASE_DIR = bcrmatch_parser.get_root_dir()
+	BASE_DIR = bcrmatch_parser.root_dir
 
 	global MODEL_DIR
-	MODEL_DIR = bcrmatch_parser.get_models_dir()
+	MODEL_DIR = bcrmatch_parser.models_dir
 
 	print('-----------------------------')
 	print(f'BASE MODEL: {BASE_DIR}')
 	print(f'MODEL DIR: {MODEL_DIR}')
 	print('-----------------------------')
 
-	dataset_db = bcrmatch_parser.get_database()
+	dataset_db = bcrmatch_parser.database
 
-	if bcrmatch_parser.get_list_datasets_flag():
+	if bcrmatch_parser.list_datasets_flag:
 		dataset_df = get_available_datasets(dataset_db)
 		print(dataset_df.to_string(index=False))
 		sys.exit(0)
 	
 
 	# Check training mode
-	if bcrmatch_parser.get_training_mode():
+	if bcrmatch_parser.training_mode:
 		print('Training mode on..')
 
 		start_training_mode(bcrmatch_parser)
@@ -505,10 +505,10 @@ def main():
 
 	# Get all the sequences into a dictionary
 	sequence_info_dict = bcrmatch_parser.get_sequences(args, parser)
-	dataset_name = bcrmatch_parser.get_training_dataset_name()
-	dataset_ver = bcrmatch_parser.get_training_dataset_version()
-	output_location = bcrmatch_parser.get_output_file_location()
-	verbose = bcrmatch_parser.get_verbose()
+	dataset_name = bcrmatch_parser.training_dataset_name
+	dataset_ver = bcrmatch_parser.training_dataset_version
+	output_location = bcrmatch_parser.output_location
+	verbose = bcrmatch_parser.verbose
 
 	# Get scaler that was pre-fitted to the training dataset through dataset_name
 	scaler = get_standard_scaler(dataset_name, dataset_ver)

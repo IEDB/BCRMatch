@@ -1,7 +1,6 @@
 # from path import Path
 import pandas as pd
 from anarci import run_anarci
-import argparse
 
 
 def extract_cdr(sequence, region):
