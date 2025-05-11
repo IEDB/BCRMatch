@@ -1,4 +1,4 @@
-FROM harbor.lji.org/iedb-public/tcrmatch:0.1.1 AS build
+FROM harbor.lji.org/iedb-public/tcrmatch:1.0.2 AS build
 
 # official Miniconda3 base image (Debian 12)
 FROM continuumio/miniconda3
