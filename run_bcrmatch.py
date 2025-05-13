@@ -81,8 +81,10 @@ def add_mean_percentile_ranks(df):
 	return df
 
 def load_percentile_rank_dataset(classifier):
-	#TODO: This is technically score distribution and not percentile rank.
-	pkl_path = f'{BASE_DIR}/pickles/score_distributions/{classifier}.pkl'
+	# NOTE: 
+	# This is technically score distribution and not percentile rank.
+	# pkl_path = f'{BASE_DIR}/pickles/score_distributions/{classifier}.pkl'
+	pkl_path = f'{BASE_DIR}/{MODEL_DIR}/score_distributions/{classifier}.pkl'
 
 	with open(pkl_path, 'rb') as f:
 		pr_dataset = pickle.load(f)
