@@ -1,0 +1,151 @@
+BCRMatch - version 0.1
+========================
+
+Introduction
+------------
+BCRMatch is a tool that accepts sequences of CDR loops of antibodies (with and without known epitopes), and uses the pre-trained machine learning models developed in this study to predict which antibodies recognize the same epitope.
+
+
+Prerequisites:
+-------------
+
++ Python 3.9 or higher
+  * http://www.python.org/
+
++ Required Python packages:
+  * numpy
+  * pandas
+  * scikit-learn
+  * xgboost
+  * tensorflow
+  * torch
+
++ Docker (optional, for running in containerized environment)
+  * https://www.docker.com/
+
+
+Installation:
+------------
+There are 3 methods of installation, listed in order of our recommendation.
+* Prebuild docker image (highly recommended)
+* Docker build (recommended)
+* Local installation
+
+1. Prebuilt docker image (highly recommended)
+Pull the image from our public registry and tag it locally as `bcrmatch`:
+> docker pull harbor.lji.org/iedb-public/bcrmatch:latest
+> docker tag harbor.lji.org/iedb-public/bcrmatch:latest bcrmatch
+
+
+2. Docker build (recommended)
+To build an image from `Dockerfile`:
+> docker build -t bcrmatch .
+
+* Run basic example on BCRMatch
+> docker run --rm bcrmatch python3 run_bcrmatch.py -i ./examples/example.tsv -tn abpairs_abligity
+
+3. Local installation
+Install requirements:
+> pip install -r requirements
+
+Install TCRMatch (https://github.com/IEDB/TCRMatch)
+Once TCRMatch is installed, the TCRMATCH_PATH environment variable must be set before running BCRMatch, e.g.:
+> export TCRMATCH_PATH=/path/to/tcrmatch_dir
+
+Download pre-trained datasets (optional, but recommended)
+Run the script "dataset-download.sh" to download the most up-to-date pre-trained datasets from the IEDB servers:
+> sh dataset-download.sh
+
+
+Usage:
+------
+Example commands for using BCRMatch are shown as if running locally or when attached to the container.
+
+Prediction:
+----------
+To perform a prediction, CDRLs and CDRHs are required along with a dataset name.
+
+Use help flag to inspect available parameters:
+> python run_bcmatch.py --help
+
+Following is an example of running a simple prediction:
+> python run_bcrmatch.py -i ./examples/example.tsv -tn abpairs_abligity
+
+BCRMatch can also take in individual files (3 CDRH FASTA files and 3 CDRL FASTA files) as input instead of a TSV file:
+> python run_bcrmatch.py -ch examples/cdrh1_seqs.fasta examples/cdrh2_seqs.fasta examples/cdrh3_seqs.fasta -cl examples/cdrl1_seqs.fasta examples/cdrl2_seqs.fasta examples/cdrl3_seqs.fasta -tn abpairs_abligity
+
+Output is saved to output.csv by default, but can be redirected by passing the -o option.
+
+List available datasets:
+> python run_bcrmatch.py --list-datasets
+
+
+Input Format:
+------------
+Input can be provided in either TSV format with 1 row per antibody or 6 paired fasta files.
+
+TSV input format:
+A TSV file containing sequences of 3 CDRLs and 3 CDRHs is accepted.
+
+| Seq_Name | CDRL1   | CDRL2 | CDRL3    | CDRH1   | CDRH2  | CDRH3        |
+| -------- | ------- | ----- | -------- | ------- | ------ | ------------ |
+| 1        | NNIGSKS | DDS   | WDSSSDHA | GFTFDDY | SWNTGT | RSYVVAAEYYFH |
+| 2        | SQDISNY | YTS   | DFTLPF   | GYTFTNY | YPGNGD | GGSYRYDGGFD  |
+| 3        | ASGNIHN | YYT   | HFWSTPR  | GFSLTGY | WGDGN  | RDYRLD       |
+
+To use the TSV file as input, --input-tsv/-i must be used:
+> python run_bcrmatch.py -i ./examples/example.tsv -tn abpairs_abligity
+
+Paired FASTA input format:
+A set of 3 heavy chain CDR and 3 light chain CDR FASTA files can be accepted as input with the -ch and -cl options, respectively.
+
+Each FASTA file must be of the same length. See the FASTA files in the examples directory.
+
+To submit paired FASTA files as input:
+> python run_bcrmatch.py -ch examples/cdrh1_seqs.fasta examples/cdrh2_seqs.fasta examples/cdrh3_seqs.fasta -cl examples/cdrl1_seqs.fasta examples/cdrl2_seqs.fasta examples/cdrl3_seqs.fasta -tn abpairs_abligity
+
+
+ANARCI:
+-------
+To use ANARCI functionality for processing full heavy and light chain sequences:
+
+1. Build the Docker container using the anarci.Dockerfile:
+> docker build -t bcrmatch-anarci -f anarci.Dockerfile .
+
+2. Run the container and access its shell:
+> docker run -it bcrmatch-anarci /bin/bash
+
+3. Inside the container, run BCRMatch with your full chain sequences:
+> python run_bcrmatch.py -fh examples/set-c/updated_example_vh_seqs.fasta -fl examples/set-c/updated_example_vl_seqs.fasta -tn abpairs_abligity
+
+Note: The ANARCI functionality is only available when running inside the anarci Docker container due to incompatibility with other python versions.
+
+
+Training:
+--------
+This step is only necessary if you have a custom dataset upon which to train. Otherwise, it is recommended to download the pre-trained models from the IEDB.
+
+Users can specify the dataset that the classifiers can be trained on. If the user provides the path to the dataset, all 5 classifiers (rf, gnb, log_reg, xgb, and ffnn) will be trained and stored under the modules folder.
+
+Required flags:
+* --training_mode/-tm: Sets the program to perform only training.
+* --training-dataset-csv/-tc: Path to the CSV file that will be used for training.
+
+Optional flags:
+* --training_dataset-version/-tv: A version number of the dataset (date format: YYYYMMDD).
+* --force-training/-f: Force classifiers to be retrained on an existing dataset name and version.
+
+Example on training classifiers with Abligity dataset:
+> python run_bcrmatch.py -tm -tc datasets/abpairs_abligity.csv -tv 20240125
+
+The above code will save the classifier as a pickle file to models/<dataset_name>/<dataset_version>/<classifier>_<dataset_name>.pkl.
+
+Forced training:
+If the same dataset name and version is provided to train, the program will raise an error. However, if classifiers still needs to be updated with the same dataset, use the --force-training/-f flag:
+> python run_bcrmatch.py -tm -tc datasets/abpairs_abligity.csv -tv 20240125 -f
+
+Custom directories/files:
+If models are stored in a separate/custom directories or dataset-db is saved somewhere else as a different name, then specify paths with --models-dir/-md and --database/-db flags:
+> python run_bcrmatch.py -tm -tc datasets/abpairs_abligity.csv -tv 20240103 -md custom/path/to/models/directory -db custom/path/to/dataset-db-file
+
+
