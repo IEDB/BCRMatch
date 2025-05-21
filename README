@@ -1,13 +1,18 @@
-BCRMatch - version 1.0
+BCRMatch - version 0.1
 ========================
 
 Introduction
 ------------
-BCRMatch is a tool that accepts sequences of CDR loops of antibodies (with and without known epitopes), and uses the pre-trained machine learning models developed in this study to predict which antibodies recognize the same epitope.
+BCRMatch is a tool that accepts sequences of CDR loops of antibodies, and uses the pre-trained machine learning models developed in this study to predict which antibodies recognize the same epitope.
 
+Note: Please contact us at help@iedb.org if you wish to use antibody structure, in addition to sequence, for making predictions.
 
 Prerequisites:
 -------------
+
++ Docker (for running in containerized environment)
+  * https://www.docker.com/
+
 
 + Python 3.9 or higher
   * http://www.python.org/
@@ -19,9 +24,6 @@ Prerequisites:
   * xgboost
   * tensorflow
   * torch
-
-+ Docker (optional, for running in containerized environment)
-  * https://www.docker.com/
 
 
 Installation:
@@ -135,7 +137,7 @@ Optional flags:
 * --training_dataset-version/-tv: A version number of the dataset (date format: YYYYMMDD).
 * --force-training/-f: Force classifiers to be retrained on an existing dataset name and version.
 
-Example on training classifiers with Abligity dataset:
+Example on training classifiers with Ab-Ligity dataset:
 > python run_bcrmatch.py -tm -tc datasets/abpairs_abligity.csv -tv 20240125
 
 The above code will save the classifier as a pickle file to models/<dataset_name>/<dataset_version>/<classifier>_<dataset_name>.pkl.
