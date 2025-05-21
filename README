@@ -1,4 +1,4 @@
-BCRMatch - version 0.1
+BCRMatch - version 0.1-beta
 ========================
 
 Introduction
@@ -138,7 +138,7 @@ Optional flags:
 * --force-training/-f: Force classifiers to be retrained on an existing dataset name and version.
 
 Example on training classifiers with Ab-Ligity dataset:
-> python run_bcrmatch.py -tm -tc datasets/abpairs_abligity.csv -tv 20240125
+> python run_bcrmatch.py -tm -tc datasets/abpairs_abligity.csv -tv 20240916
 
 The above code will save the classifier as a pickle file to models/<dataset_name>/<dataset_version>/<classifier>_<dataset_name>.pkl.
 
