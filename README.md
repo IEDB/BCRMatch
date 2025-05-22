@@ -96,20 +96,20 @@ python run_bcrmatch.py -i examples/set-a/example.tsv -tn abpairs_abligity -o out
 
 Using a TSV file:
 ```bash
-docker run --rm -v $(pwd):/src/bcrmatch bcrmatch python3 run_bcrmatch.py -i /src/bcrmatch/examples/set-a/example.tsv -tn abpairs_abligity
+docker run --rm -v $(pwd):/src/bcrmatch bcrmatch bash -c "python3 run_bcrmatch.py -i /src/bcrmatch/examples/set-a/example.tsv -tn abpairs_abligity"
 ```
 
 Using FASTA files:
 ```bash
-docker run --rm -v $(pwd):/src/bcrmatch bcrmatch python3 run_bcrmatch.py \
+docker run --rm -v $(pwd):/src/bcrmatch bcrmatch bash -c "python3 run_bcrmatch.py \
 -ch /src/bcrmatch/examples/set-a/cdrh1_input.fasta /src/bcrmatch/examples/set-a/cdrh2_input.fasta /src/bcrmatch/examples/set-a/cdrh3_input.fasta \
 -cl /src/bcrmatch/examples/set-a/cdrl1_input.fasta /src/bcrmatch/examples/set-a/cdrl2_input.fasta /src/bcrmatch/examples/set-a/cdrl3_input.fasta \
--tn abpairs_abligity
+-tn abpairs_abligity"
 ```
 
 Saving output to a file (output_file.csv will be in your current directory):
 ```bash
-docker run --rm -v $(pwd):/src/bcrmatch bcrmatch python3 run_bcrmatch.py -i /src/bcrmatch/examples/set-a/example.tsv -tn abpairs_abligity -o /src/bcrmatch/output_file.csv
+docker run --rm -v $(pwd):/src/bcrmatch bcrmatch bash -c "python3 run_bcrmatch.py -i /src/bcrmatch/examples/set-a/example.tsv -tn abpairs_abligity -o /src/bcrmatch/output_file.csv"
 ```
 
 ## Training
