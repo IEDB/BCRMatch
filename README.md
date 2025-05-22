@@ -64,8 +64,8 @@ python run_bcrmatch.py -i examples/set-a/example.tsv -tn abpairs_abligity
 Using FASTA files:
 ```bash
 python run_bcrmatch.py \
--ch examples/cdrh1_seqs.fasta examples/cdrh2_seqs.fasta examples/cdrh3_seqs.fasta \
--cl examples/cdrl1_seqs.fasta examples/cdrl2_seqs.fasta examples/cdrl3_seqs.fasta \
+-ch examples/set-a/cdrh1_input.fasta examples/set-a/cdrh2_input.fasta examples/set-a/cdrh3_input.fasta \
+-cl examples/set-a/cdrl1_input.fasta examples/set-a/cdrl2_input.fasta examples/set-a/cdrl3_input.fasta \
 -tn abpairs_abligity
 ```
 
@@ -77,16 +77,16 @@ Train models on your custom dataset:
 ```bash
 python run_bcrmatch.py \
 -tm \
--tc datasets/your_dataset.csv \
+-tc path/to/your_dataset.csv \
 -tn your_dataset_name \
 -tv YYYYMMDD
 ```
 
-Example using the Abligity dataset:
+Example using the Ab-Ligity dataset:
 ```bash
 python run_bcrmatch.py \
 -tm \
--tc datasets/abpairs_abligity.csv \
+-tc path/to/abpairs_abligity.csv \
 -tn abpairs_abligity \
 -tv 20240916
 ```
