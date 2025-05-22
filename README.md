@@ -88,10 +88,10 @@ python run_bcrmatch.py \
 -tm \
 -tc datasets/abpairs_abligity.csv \
 -tn abpairs_abligity \
--tv 20240125
+-tv 20240916
 ```
 
-This will train all classifiers and save them to the models directory. By default, models are saved to `models/abpairs_abligity/20240125/`. You can specify a custom models directory using the `--models-dir` option.
+This will train all classifiers and save them to the models directory. By default, models are saved to `models/abpairs_abligity/20240916/`. You can specify a custom models directory using the `--models-dir` option.
 
 ## Anarci
 
