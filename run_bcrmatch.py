@@ -5,6 +5,7 @@ import tempfile
 import pandas as pd
 import numpy as np
 import math
+import textwrap
 from statsmodels.distributions.empirical_distribution import ECDF
 from bcrmatch_argparser import BCRMatchArgumentParser
 from bcrmatch import bcrmatch_functions, classify_abs
@@ -13,7 +14,7 @@ from pathlib import Path
 from statistics import harmonic_mean
 
 # Absolute path to the TCRMatch program
-TCRMATCH_PATH = os.getenv('TCRMATCH_PATH', '/src/bcrmatch')
+TCRMATCH_PATH = os.getenv('TCRMATCH_PATH')
 BASE_DIR = str(Path(__file__).parent.absolute())
 MODEL_DIR = 'models/models'
 
@@ -504,6 +505,13 @@ def main():
 		print("Finished training the models...")
 		sys.exit(0)
 
+
+	if not TCRMATCH_PATH or TCRMATCH_PATH.strip() == '':
+		raise EnvironmentError(textwrap.dedent("""
+			TCRMatch path is not set or is empty. Please set the TCRMATCH_PATH environment variable.
+		""").strip())
+		sys.exit(1)
+	
 
 	# Get all the sequences into a dictionary
 	sequence_info_dict = bcrmatch_parser.get_sequences(args, parser)
