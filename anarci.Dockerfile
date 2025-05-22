@@ -1,4 +1,4 @@
-FROM harbor.lji.org/iedb-public/tcrmatch:0.1.1 AS build
+FROM harbor.lji.org/iedb-public/tcrmatch:1.0.2 AS build
 
 # official Miniconda3 base image (Debian 12)
 FROM continuumio/miniconda3
@@ -40,5 +40,7 @@ RUN echo "source activate myenv" > ~/.bashrc
 
 # Make the environment available in the shell by sourcing the Conda setup
 SHELL ["/bin/bash", "-c"]
+
+ENV CONTAINER_TYPE=anarci
 
 CMD ["sh", "-c", "python3 run_bcrmatch.py ${BCRMATCH_ARGS}"]

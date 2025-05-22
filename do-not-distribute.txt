@@ -1,0 +1,19 @@
+# list of files to remove from the distributed package
+# TODO: evaluate if many of these files should be removed altogether
+.gitignore
+.gitlab-ci.yml
+.git/*
+.python-version
+.git/
+__pycache__/*
+__pycache__
+build.sh
+build.md
+build/*
+build/
+do-not-distribute.txt
+README.md
+VERSION
+pickles/
+pickle_score_distributions.py
+updated_score_distributions_for_percentile_with_fixed_tf_seed_v2.csv

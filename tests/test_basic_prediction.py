@@ -56,257 +56,44 @@ def delete_folders_with_prefix(root_dir, prefix="9999"):
 
 class TestBasicPrediction(unittest.TestCase):
     app_dir = find_root_dir()
-    # python_path = '/usr/bin/python3'
     python_path = sys.executable
     test_dir = f'{app_dir}/tests'
     example_dir = f'{test_dir}/examples-a'
     output_file_to_delete = ''  
 
-    # def test_abpairs_abligity_1(self):
-    #     today = datetime.date.today().strftime('%Y%m%d')
-    #     training_version = f"9999{today}"
-    #     output_file = f"{self.test_dir}/test_output.csv"
-    #     dataset_name = 'abpairs_abligity_imgt_20240916_hk'
-    #     dataset = f'{self.app_dir}/{dataset_name}.csv'
-    #     ground_truth_file = f'{self.example_dir}/ground_truth_abpair_abligity.csv'
-    #     self.output_file_to_delete = output_file
-
-    #     # Training
-    #     command = [
-    #         self.python_path, 
-    #         f"{self.app_dir}/run_bcrmatch.py", 
-    #         "-tm", 
-    #         "-tc", dataset, 
-    #         # 9999 to indicate that it's a test
-    #         "-tv", training_version,
-    #         "-f",
-    #     ]
-
-    #     # print(command)
-
-    #     # Call the program and capture output (stdout and stderr)
-    #     result = subprocess.run(command, capture_output=True, text=True)
-
-    #     # Check the result
-    #     if result.returncode == 0:
-    #         print("Program executed successfully")
-    #         print("Output:", result.stdout)
-    #     else:
-    #         print("Error occurred")
-    #         print("Error:", result.stderr)
-
-    #     # Prediction
-    #     command = [
-    #         self.python_path,  # the Python executable
-    #         f"{self.app_dir}/run_bcrmatch.py", 
-    #         "-ch", f"{self.example_dir}/cdrh1_input.fasta", f"{self.example_dir}/cdrh2_input.fasta", f"{self.example_dir}/cdrh3_input.fasta",  # cdrh arguments
-    #         "-cl", f"{self.example_dir}/cdrl1_input.fasta", f"{self.example_dir}/cdrl2_input.fasta", f"{self.example_dir}/cdrl3_input.fasta",  # cdrl arguments
-    #         "-tn", dataset_name,  # training name
-    #         "-tv", training_version,  # training version
-    #         "-v",  # verbosity flag
-    #         "-o", output_file,
-    #     ]
-
-    #     # print(command)
-
-    #     result = subprocess.run(command, capture_output=True, text=True)
-    #     # Check the result
-    #     if result.returncode == 0:
-    #         print("Program executed successfully")
-    #     else:
-    #         print("Error occurred")
-    #         print("Error:", result.stderr)
-
-    #     # Prediction Result
-    #     df = pd.read_csv(output_file)
-    #     row = df[df['Antibody pair'] == '24_764']
-
-    #     # Precalculated Result (Ground Truth)
-    #     gt_df = pd.read_csv(ground_truth_file)
-    #     gt_row = gt_df[gt_df['Antibody pair'] == '24_764']
-
-    #     # RF
-    #     rf_score = row['RF Prediction'].values[0]
-    #     gt_rf_score = gt_row['RF Prediction'].values[0]
-    #     self.assertTrue(self.compare_values(rf_score, gt_rf_score))
-
-    #     rf_score = row['RF Percentile Rank'].values[0]
-    #     gt_rf_score = gt_row['RF Percentile Rank'].values[0]
-    #     self.assertTrue(self.compare_values(rf_score, gt_rf_score))
-
-    #     # LR
-    #     lr_score = row['LR Prediction'].values[0]
-    #     gt_lr_score = gt_row['LR Prediction'].values[0]
-    #     self.assertTrue(self.compare_values(lr_score, gt_lr_score))
-        
-    #     lr_score = row['LR Percentile Rank'].values[0]
-    #     gt_lr_score = gt_row['LR Percentile Rank'].values[0]
-    #     self.assertTrue(self.compare_values(lr_score, gt_lr_score))
-        
-    #     # GNB
-    #     gnb_score = row['GNB Prediction'].values[0]
-    #     gt_gnb_score = gt_row['GNB Prediction'].values[0]
-    #     self.assertTrue(self.compare_values(gnb_score, gt_gnb_score))
-        
-    #     gnb_score = row['GNB Percentile Rank'].values[0]
-    #     gt_gnb_score = gt_row['GNB Percentile Rank'].values[0]
-    #     self.assertTrue(self.compare_values(gnb_score, gt_gnb_score))
-        
-    #     # XGB
-    #     xgb_score = row['XGB Prediction'].values[0]
-    #     gt_xgb_score = gt_row['XGB Prediction'].values[0]
-    #     self.assertTrue(self.compare_values(xgb_score, gt_xgb_score))
-        
-    #     xgb_score = row['XGB Percentile Rank'].values[0]
-    #     gt_xgb_score = gt_row['XGB Percentile Rank'].values[0]
-    #     self.assertTrue(self.compare_values(xgb_score, gt_xgb_score))
-
-    #     # FFNN
-    #     ffnn_score = row['FFNN Prediction'].values[0]
-    #     gt_ffnn_score = gt_row['FFNN Prediction'].values[0]
-    #     self.assertTrue(self.compare_values(ffnn_score, gt_ffnn_score))
-        
-    #     ffnn_score = row['FFNN Percentile Rank'].values[0]
-    #     gt_ffnn_score = gt_row['FFNN Percentile Rank'].values[0]
-    #     self.assertTrue(self.compare_values(ffnn_score, gt_ffnn_score))
-
-    def test_abpairs_abligity_2(self):
-        today = datetime.date.today().strftime('%Y%m%d')
-        training_version = f"9999{today}"
-        output_file = f"{self.test_dir}/test_output.csv"
-        dataset_name = 'abpairs_abligity_imgt_20240916_hk'
-        dataset = f'{self.app_dir}/{dataset_name}.csv'
-        self.example_dir = f'{self.test_dir}/examples-b'
-        ground_truth_file = f'{self.example_dir}/updated_examples_withpercentiles.csv'
+    def test_tsv_prediction_output(self):
+        """Test prediction using TSV input and compare output with reference file."""
+        output_file = f"{self.test_dir}/bcrout-test.csv"
+        reference_file = f"{self.test_dir}/bcrout.csv"
         self.output_file_to_delete = output_file
 
-        # Training
+        # Run prediction with TSV input
         command = [
-            self.python_path, 
-            f"{self.app_dir}/run_bcrmatch.py", 
-            "-tm", 
-            "-tc", dataset, 
-            # 9999 to indicate that it's a test
-            "-tv", training_version,
-            "-f",
+            self.python_path,
+            f"{self.app_dir}/run_bcrmatch.py",
+            "-i", f"{self.app_dir}/examples/set-a/example.tsv",
+            "-tn", "abpairs_abligity",
+            "-o", output_file
         ]
 
-        # print(command)
-
-        # Call the program and capture output (stdout and stderr)
         result = subprocess.run(command, capture_output=True, text=True)
-
-        # Check the result
-        if result.returncode == 0:
-            print("Program executed successfully")
-            print("Output:", result.stdout)
-        else:
-            print("Error occurred")
+        if result.returncode != 0:
+            print("Error occurred during prediction")
             print("Error:", result.stderr)
+            self.fail("Prediction failed")
 
-        # Prediction
-        command = [
-            self.python_path,  # the Python executable
-            f"{self.app_dir}/run_bcrmatch.py", 
-            "-ch", f"{self.example_dir}/cdrh1_seqs.fasta", f"{self.example_dir}/cdrh2_seqs.fasta", f"{self.example_dir}/cdrh3_seqs.fasta",  # cdrh arguments
-            "-cl", f"{self.example_dir}/cdrl1_seqs.fasta", f"{self.example_dir}/cdrl2_seqs.fasta", f"{self.example_dir}/cdrl3_seqs.fasta",  # cdrl arguments
-            "-tn", dataset_name,  # training name
-            "-tv", training_version,  # training version
-            "-v",  # verbosity flag
-            "-o", output_file,
-        ]
+        # Read both CSV files
+        output_df = pd.read_csv(output_file)
+        reference_df = pd.read_csv(reference_file)
 
-        # print(command)
-
-        result = subprocess.run(command, capture_output=True, text=True)
-        # Check the result
-        if result.returncode == 0:
-            print("Program executed successfully")
-        else:
-            print("Error occurred")
-            print("Error:", result.stderr)
-
-        # Prediction Result
-        df = pd.read_csv(output_file)
-
-        # Precalculated Result (Ground Truth)
-        gt_df = pd.read_csv(ground_truth_file)
-
-        predicted_pairs = df['Antibody pair'].to_list()
-
-        for pair in predicted_pairs:
-            print('comparing %s' %(pair))
-            self.compare_scores_given_antibody_pair(df, gt_df, pair)
-
-    def compare_scores_given_antibody_pair(self, df, gt_df, ab_pair):
-        row = df[df['Antibody pair'] == ab_pair]
-        gt_row = gt_df[gt_df['Antibody pair'] == ab_pair]
-
-        # RF
-        rf_score = row['RF Prediction'].values[0]
-        gt_rf_score = gt_row['RF Prediction'].values[0]
-        self.assertTrue(self.compare_values(rf_score, gt_rf_score))
-
-        rf_score = row['RF Percentile Rank'].values[0]
-        gt_rf_score = gt_row['RF Percentile Rank'].values[0]
-        self.assertTrue(self.compare_values(rf_score, gt_rf_score))
-
-        # LR
-        lr_score = row['LR Prediction'].values[0]
-        gt_lr_score = gt_row['LR Prediction'].values[0]
-        self.assertTrue(self.compare_values(lr_score, gt_lr_score))
-        
-        lr_score = row['LR Percentile Rank'].values[0]
-        gt_lr_score = gt_row['LR Percentile Rank'].values[0]
-        self.assertTrue(self.compare_values(lr_score, gt_lr_score))
-        
-        # GNB
-        gnb_score = row['GNB Prediction'].values[0]
-        gt_gnb_score = gt_row['GNB Prediction'].values[0]
-        self.assertTrue(self.compare_values(gnb_score, gt_gnb_score))
-        
-        gnb_score = row['GNB Percentile Rank'].values[0]
-        gt_gnb_score = gt_row['GNB Percentile Rank'].values[0]
-        self.assertTrue(self.compare_values(gnb_score, gt_gnb_score))
-        
-        # XGB
-        xgb_score = row['XGB Prediction'].values[0]
-        gt_xgb_score = gt_row['XGB Prediction'].values[0]
-        self.assertTrue(self.compare_values(xgb_score, gt_xgb_score))
-        
-        xgb_score = row['XGB Percentile Rank'].values[0]
-        gt_xgb_score = gt_row['XGB Percentile Rank'].values[0]
-        self.assertTrue(self.compare_values(xgb_score, gt_xgb_score))
-
-        # FFNN
-        ffnn_score = row['FFNN Prediction'].values[0]
-        gt_ffnn_score = gt_row['FFNN Prediction'].values[0]
-        self.assertTrue(self.compare_values(ffnn_score, gt_ffnn_score))
-        
-        ffnn_score = row['FFNN Percentile Rank'].values[0]
-        gt_ffnn_score = gt_row['FFNN Percentile Rank'].values[0]
-        self.assertTrue(self.compare_values(ffnn_score, gt_ffnn_score))
-
-
-    def compare_values(self, f1, f2):
-        ff1 = self.format_values(f1)
-        ff2 = self.format_values(f2)
-
-        return ff1 == ff2
-    
-    def format_values(self, number):
-        num = float(number)
-
-        if number == 0.0: return 0.0
-
-        if num < 0.1:
-            # Format to scientific notation with 2 significant digits
-            return "{:.2e}".format(num)
-        else:
-            # Calculate the number of significant digits after the decimal
-            return round(num, 2 - int(math.floor(math.log10(abs(num)))) - 1)
-
-
+        # Compare the dataframes with tolerance for numerical differences
+        pd.testing.assert_frame_equal(
+            output_df,
+            reference_df,
+            check_exact=False,
+            rtol=1e-3,  # relative tolerance
+            atol=1e-5   # absolute tolerance
+        )
 
     def tearDown(self):
         # Example usage
@@ -323,10 +110,8 @@ class TestBasicPrediction(unittest.TestCase):
             os.remove(self.output_file_to_delete)
             print(f'File {self.output_file_to_delete} is removed')
 
-def  main():
-    tester = TestBasicPrediction()
-    tester.test_abpairs_abligity_2()
+def main():
+    unittest.main()
 
 if __name__=='__main__':
-    unittest.main()
-    # main()
+    main()
