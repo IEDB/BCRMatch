@@ -35,7 +35,7 @@ Now you can run commands using the ``bcrmatch`` container image as described bel
 pip install -r requirements.txt
 ```
 
-2. Install TCRMatch and set environment variable:
+2. Set environment variable to TCRMatch path :
 ```bash
 export TCRMATCH_PATH=/path/to/tcrmatch_dir
 ```
