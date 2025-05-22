@@ -129,7 +129,7 @@ class BCRMatchArgumentParser:
                     Display the complete result data to the user.
                     '''))
         # NOTE: This needs to be str type, as users can provide their custom versions.
-        self.parser.add_argument('--training_dataset-version', '-tv',
+        self.parser.add_argument('--training-dataset-version', '-tv',
                             dest = 'training_dataset_version',
                             required = False,
                             type = int,

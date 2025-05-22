@@ -36,15 +36,10 @@ Pull the image from public registry and tag it locally as `bcrmatch`:
 > docker pull harbor.lji.org/iedb-public/bcrmatch:latest
 > docker tag harbor.lji.org/iedb-public/bcrmatch:latest bcrmatch
 
-
-2. Docker build (recommended)
-To build an image from `Dockerfile`:
-> docker build -t bcrmatch .
-
 * Run basic example on BCRMatch
 > docker run --rm bcrmatch python3 run_bcrmatch.py -i ./examples/example.tsv -tn abpairs_abligity
 
-3. Local installation
+2. Local installation
 Install requirements:
 > pip install -r requirements.txt
 
@@ -61,39 +56,40 @@ Usage:
 To perform a prediction, CDRLs and CDRHs are required along with a dataset name.
 
 Use help flag to inspect available parameters:
-> python run_bcmatch.py --help
+> python run_bcrmatch.py --help
 
-Run a simple prediction:
+### Running Locally
+
+Run a simple prediction with a TSV file:
 > python run_bcrmatch.py -i examples/set-a/example.tsv -tn abpairs_abligity
 
-Run with individual fasta files (3 CDRH FASTA files and 3 CDRL FASTA files):
+Run with individual FASTA files:
 > python run_bcrmatch.py -ch examples/set-a/cdrh1_input.fasta examples/set-a/cdrh2_input.fasta examples/set-a/cdrh3_input.fasta -cl examples/set-a/cdrl1_input.fasta examples/set-a/cdrl2_input.fasta examples/set-a/cdrl3_input.fasta -tn abpairs_abligity
 
-Result can be saved to an output file by setting the '-o' flag (only CSV or TSV allowed).
+Saving the output to a file:
 > python run_bcrmatch.py -i examples/set-a/example.tsv -tn abpairs_abligity -o output_file.csv
 
 List available datasets:
 > python run_bcrmatch.py --list-datasets
 
+### Running with Docker
+
+Run a simple prediction with a TSV file:
+> docker run --rm -v $(pwd):/src/bcrmatch bcrmatch python3 run_bcrmatch.py -i /src/bcrmatch/examples/set-a/example.tsv -tn abpairs_abligity
+
+Run with individual FASTA files:
+> docker run --rm -v $(pwd):/src/bcrmatch bcrmatch python3 run_bcrmatch.py -ch /src/bcrmatch/examples/set-a/cdrh1_input.fasta /src/bcrmatch/examples/set-a/cdrh2_input.fasta /src/bcrmatch/examples/set-a/cdrh3_input.fasta -cl /src/bcrmatch/examples/set-a/cdrl1_input.fasta /src/bcrmatch/examples/set-a/cdrl2_input.fasta /src/bcrmatch/examples/set-a/cdrl3_input.fasta -tn abpairs_abligity
+
+Saving the output to a file (output_file.csv will be in your current directory):
+> docker run --rm -v $(pwd):/src/bcrmatch bcrmatch python3 run_bcrmatch.py -i /src/bcrmatch/examples/set-a/example.tsv -tn abpairs_abligity -o /src/bcrmatch/output_file.csv
+
+List available datasets:
+> docker run --rm bcrmatch python3 run_bcrmatch.py --list-datasets
+
 
 Training:
 --------
-This step is only necessary if you have a custom dataset upon which to train. Otherwise, it is recommended to download the pre-trained models from the IEDB.
-
-Users can specify the dataset that the classifiers can be trained on. If the user provides the path to the dataset, all 5 classifiers (rf, gnb, log_reg, xgb, and ffnn) will be trained and stored under the modules folder.
-
-Use help command to view all available arguments:
-> python run_bcrmatch.py --help
-
-Example on training classifiers with Ab-Ligity dataset:
-> python run_bcrmatch.py -tm -tc path/to/abpairs_abligity.csv -tv 20240916
-
-The above code will save the classifier as a pickle file to models/<dataset_name>/<dataset_version>/<classifier>_<dataset_name>.pkl.
-
-Forced training:
-BCRMatch will not train same dataset by default. However, this can be overriden by using the --force-training/-f flag:
-> python run_bcrmatch.py -tm -tc datasets/abpairs_abligity.csv -tv 20240916 -f
-
+For detailed information about training custom models, please refer to the documentation in the `docs/training.md`.
 
 ANARCI:
 -------
@@ -105,9 +101,5 @@ To use ANARCI functionality for processing full heavy and light chain sequences:
 > docker pull harbor.lji.org/iedb-public/bcrmatch-anarci:latest
 > docker tag harbor.lji.org/iedb-public/bcrmatch-anarci:latest bcrmatch-anarci
 
-2. Build the ANARCI container:
-> docker build -t bcrmatch-anarci -f anarci.Dockerfile .
-
-3. Inside the container, run BCRMatch with your full chain sequences:
-> docker run -it bcrmatch-anarci /bin/bash
-> python run_bcrmatch.py -fh examples/set-c/updated_example_vh_seqs.fasta -fl examples/set-c/updated_example_vl_seqs.fasta -tn abpairs_abligity
+2. Inside the container, run BCRMatch with your full chain sequences:
+> docker run --rm bcrmatch-anarci python3 run_bcrmatch.py -fh examples/set-c/updated_example_vh_seqs.fasta -fl examples/set-c/updated_example_vl_seqs.fasta -tn abpairs_abligity

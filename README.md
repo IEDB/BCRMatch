@@ -4,9 +4,38 @@ BCRMatch is a tool that accepts sequences of CDR loops of antibodies, and uses t
 
 > **Note**: Please contact us at help@iedb.org if you wish to use antibody structure, in addition to sequence, for making predictions.
 
+> **Releases**: All releases can be found in the [tags](https://github.com/IEDB/BCRMatch/tags) section of this repository.
+
+> **Downloads**: Any future versions of BCRMatch can be found from the following links.
+> - [IEDB Downloads Server](https://downloads.iedb.org/tools/bcrmatch/)
+> - [Next-Gen Tools Downloads Page](https://nextgen-tools.iedb.org/download-all)
+
+
+## Prerequisites:
+
++ Docker (for running in containerized environment)
+  * https://www.docker.com/
+
++ Python 3.9 or higher
+  * http://www.python.org/
+
++ Required Python packages:
+  * numpy
+  * pandas
+  * scikit-learn
+  * xgboost
+  * tensorflow
+  * torch
+
++ Dependency tool:
+  * TCRMatch 
+    * https://github.com/IEDB/TCRMatch
+
+
+
 ## Installation
 
-### 1. Prebuilt docker image (highly recommended)
+### 1. Prebuilt docker image (recommended)
 
 Pull and run the pre-built image:
 
@@ -15,20 +44,9 @@ docker pull harbor.lji.org/iedb-public/bcrmatch:latest
 docker tag harbor.lji.org/iedb-public/bcrmatch:latest bcrmatch
 ```
 
-### 2. Docker build (recommended)
-
-To build an image from `Dockerfile`:
-
-```bash
-docker build -t bcrmatch .
-```
-
-Now you can run commands using the ``bcrmatch`` container image as described below.
-
 > **_NOTE_**: On ARM-based systems (e.g., Mac M1/M2/M3), you may also need to pass the ``--platform=linux/amd64`` command line switch to every Docker command.<br><br>Although it seems to build properly on some ARM machines, the tensorflow libraries may cause issues and the image may be unusable.
 
-
-### Local Installation
+### 2. Local Installation
 
 1. Install Python requirements:
 ```bash
@@ -54,7 +72,7 @@ python run_bcrmatch.py -h
 python run_bcrmatch.py --help
 ```
 
-### Basic Prediction
+### Running Locally
 
 Using a TSV file:
 ```bash
@@ -69,29 +87,32 @@ python run_bcrmatch.py \
 -tn abpairs_abligity
 ```
 
+Saving output to a file:
+```bash
+python run_bcrmatch.py -i examples/set-a/example.tsv -tn abpairs_abligity -o output_file.csv
+```
+
+### Running with Docker
+
+Using a TSV file:
+```bash
+docker run --rm -v $(pwd):/src/bcrmatch bcrmatch python3 run_bcrmatch.py -i /src/bcrmatch/examples/set-a/example.tsv -tn abpairs_abligity
+```
+
+Using FASTA files:
+```bash
+docker run --rm -v $(pwd):/src/bcrmatch bcrmatch python3 run_bcrmatch.py \
+-ch /src/bcrmatch/examples/set-a/cdrh1_input.fasta /src/bcrmatch/examples/set-a/cdrh2_input.fasta /src/bcrmatch/examples/set-a/cdrh3_input.fasta \
+-cl /src/bcrmatch/examples/set-a/cdrl1_input.fasta /src/bcrmatch/examples/set-a/cdrl2_input.fasta /src/bcrmatch/examples/set-a/cdrl3_input.fasta \
+-tn abpairs_abligity
+```
+
+Saving output to a file (output_file.csv will be in your current directory):
+```bash
+docker run --rm -v $(pwd):/src/bcrmatch bcrmatch python3 run_bcrmatch.py -i /src/bcrmatch/examples/set-a/example.tsv -tn abpairs_abligity -o /src/bcrmatch/output_file.csv
+```
 
 ## Training
-
-Train models on your custom dataset:
-
-```bash
-python run_bcrmatch.py \
--tm \
--tc path/to/your_dataset.csv \
--tn your_dataset_name \
--tv YYYYMMDD
-```
-
-Example using the Ab-Ligity dataset:
-```bash
-python run_bcrmatch.py \
--tm \
--tc path/to/abpairs_abligity.csv \
--tn abpairs_abligity \
--tv 20240916
-```
-
-This will train all classifiers and save them to the models directory. By default, models are saved to `models/abpairs_abligity/20240916/`. You can specify a custom models directory using the `--models-dir` option.
 
 ## Anarci
 
@@ -105,12 +126,7 @@ docker pull harbor.lji.org/iedb-public/bcrmatch-anarci:latest
 docker tag harbor.lji.org/iedb-public/bcrmatch-anarci:latest bcrmatch-anarci
 ```
 
-2. Build the ANARCI container:
-```bash
-docker build -t bcrmatch-anarci -f anarci.Dockerfile .
-```
-
-3. Run with full sequences:
+2. Run with full sequences:
 ```bash
 docker run -it bcrmatch-anarci /bin/bash
 
