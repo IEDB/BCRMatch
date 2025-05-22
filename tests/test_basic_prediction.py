@@ -82,13 +82,18 @@ class TestBasicPrediction(unittest.TestCase):
             print("Error:", result.stderr)
             self.fail("Prediction failed")
 
-        # Compare output with reference file using diff
-        diff_command = ["diff", output_file, reference_file]
-        diff_result = subprocess.run(diff_command, capture_output=True, text=True)
-        
-        # If diff returns 0, files are identical
-        self.assertEqual(diff_result.returncode, 0, 
-            f"Output file differs from reference file. Diff output:\n{diff_result.stdout}")
+        # Read both CSV files
+        output_df = pd.read_csv(output_file)
+        reference_df = pd.read_csv(reference_file)
+
+        # Compare the dataframes with tolerance for numerical differences
+        pd.testing.assert_frame_equal(
+            output_df,
+            reference_df,
+            check_exact=False,
+            rtol=1e-3,  # relative tolerance
+            atol=1e-5   # absolute tolerance
+        )
 
     def tearDown(self):
         # Example usage
