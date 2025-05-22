@@ -66,7 +66,7 @@ Use help flag to inspect available parameters:
 Run a simple prediction:
 > python run_bcrmatch.py -i examples/set-a/example.tsv -tn abpairs_abligity
 
-BCRMatch can also take in individual files (3 CDRH FASTA files and 3 CDRL FASTA files) as input instead of a TSV file:
+Run with individual fasta files (3 CDRH FASTA files and 3 CDRL FASTA files):
 > python run_bcrmatch.py -ch examples/set-a/cdrh1_input.fasta examples/set-a/cdrh2_input.fasta examples/set-a/cdrh3_input.fasta -cl examples/set-a/cdrl1_input.fasta examples/set-a/cdrl2_input.fasta examples/set-a/cdrl3_input.fasta -tn abpairs_abligity
 
 Result can be saved to an output file by setting the '-o' flag (only CSV or TSV allowed).
