@@ -40,7 +40,7 @@ pip install -r requirements.txt
 export TCRMATCH_PATH=/path/to/tcrmatch_dir
 ```
 
-3. Download pre-trained models:
+3. Download pre-trained models (optional, but recommended):
 ```bash
 sh dataset-download.sh
 ```
