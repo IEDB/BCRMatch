@@ -159,7 +159,7 @@ class BCRMatchArgumentParser:
                             default = argparse.SUPPRESS,
                             help = textwrap.dedent('''\
                             Path to the output file.
-                            (The default output file is 'output.csv'.)
+                            Only accepts .csv or .tsv file extensions.
                             '''))
 
         # Positional Arguments (User input parameters)
@@ -460,6 +460,9 @@ class BCRMatchArgumentParser:
             self.models_dir = args
         
         if hasattr(args, 'output'):
+            if not args.output.endswith('.csv') and not args.output.endswith('.tsv'):
+                raise ValueError('Output file must have a .csv or .tsv extension.')
+
             self.output_location = args
         
         if hasattr(args, 'verbose'):

@@ -53,8 +53,12 @@ def output_result(result_df: pd.DataFrame, output_location: str, is_verbose: boo
 		print(result_df)
 		sys.exit()
 
+	# Determine file extension and set appropriate separator
+	file_ext = Path(output_location).suffix.lower()
+	sep = '\t' if file_ext == '.tsv' else ','
+	
 	# Write out to a file
-	result_df.to_csv(output_location, index=False)
+	result_df.to_csv(output_location, index=False, sep=sep)
 	print("Completed!")
 
 def add_mean_percentile_ranks(df: pd.DataFrame) -> pd.DataFrame:
