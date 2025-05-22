@@ -102,9 +102,9 @@ class BCRMatchArgumentParser:
                             dest = 'models_dir', 
                             required = False,
                             type = str,
-                            default = 'models/models/',
+                            default = argparse.SUPPRESS,
                             help = textwrap.dedent('''\
-                            Path to the directory that contains all the pickled models.
+                            Absolute path to the directory that contains all the pickled models.
                             '''))
         self.parser.add_argument('--training-dataset-csv', '-tc',
                             dest = 'training_dataset_csv',
@@ -128,7 +128,7 @@ class BCRMatchArgumentParser:
                     help = textwrap.dedent('''\
                     Display the complete result data to the user.
                     '''))
-        # TODO: This needs to be str type, as users can provide their custom versions.
+        # NOTE: This needs to be str type, as users can provide their custom versions.
         self.parser.add_argument('--training_dataset-version', '-tv',
                             dest = 'training_dataset_version',
                             required = False,
@@ -399,7 +399,7 @@ class BCRMatchArgumentParser:
         # Make sure the path has no trailing '/'
         if models_dir.endswith(os.sep):
             models_dir = models_dir[:-1]
-        self._models_dir = f'{self._root_dir}/{models_dir}'
+        self._models_dir = models_dir
 
     # Properties for output location
     @property

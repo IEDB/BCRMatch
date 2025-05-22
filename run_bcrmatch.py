@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 import math
 import textwrap
+import logging
 from statsmodels.distributions.empirical_distribution import ECDF
 from bcrmatch_argparser import BCRMatchArgumentParser
 from bcrmatch import bcrmatch_functions, classify_abs
@@ -13,13 +14,18 @@ from subprocess import Popen, PIPE
 from pathlib import Path
 from statistics import harmonic_mean
 
+logging.basicConfig(level=logging.WARNING, format='%(levelname)s: %(message)s')
+
+
 # Absolute path to the TCRMatch program
 TCRMATCH_PATH = os.getenv('TCRMATCH_PATH')
-BASE_DIR = str(Path(__file__).parent.absolute())
-MODEL_DIR = 'models/models'
+# These will be updated in the main() function
+BASE_DIR = None
+MODEL_DIR = None
 
 import tensorflow as tf
 tf.random.set_seed(42)
+
 
 def output_result(result_df, output_location, is_verbose):
 	default_columns_to_display = [
@@ -85,7 +91,8 @@ def load_percentile_rank_dataset(classifier):
 	# NOTE: 
 	# This is technically score distribution and not percentile rank.
 	# pkl_path = f'{BASE_DIR}/pickles/score_distributions/{classifier}.pkl'
-	pkl_path = f'{BASE_DIR}/{MODEL_DIR}/score_distributions/{classifier}.pkl'
+	# pkl_path = f'{BASE_DIR}/{MODEL_DIR}/score_distributions/{classifier}.pkl'
+	pkl_path = MODEL_DIR / 'score_distributions' / f'{classifier}.pkl'
 
 	with open(pkl_path, 'rb') as f:
 		pr_dataset = pickle.load(f)
@@ -178,7 +185,7 @@ def get_classifiers(dataset_name, version, db):
 	classifiers = {}
 
 	for i, row in filtered_df.iterrows():
-		pkl_path = '%s/%s' %(MODEL_DIR, row['pickle_file'])
+		pkl_path = MODEL_DIR / row['pickle_file']
 		classifier = row['model']
 
 		try:
@@ -478,15 +485,24 @@ def main():
 
 	# Set BASE_DIR (config step)
 	global BASE_DIR
-	BASE_DIR = bcrmatch_parser.root_dir
+	BASE_DIR = Path(bcrmatch_parser.root_dir)
 
 	global MODEL_DIR
-	MODEL_DIR = bcrmatch_parser.models_dir
+	if bcrmatch_parser.models_dir:
+		MODEL_DIR = Path(bcrmatch_parser.models_dir) / 'models'
+	else:
+		MODEL_DIR = BASE_DIR / 'models' / 'models'
 
-	print('-----------------------------')
-	print(f'BASE MODEL: {BASE_DIR}')
-	print(f'MODEL DIR: {MODEL_DIR}')
-	print('-----------------------------')
+		logging.warning(textwrap.dedent(f"""
+			MODEL_DIR is not set, using default value.
+			\t Default model directory: {MODEL_DIR}
+			\t To set a custom path, use the \"--models-dir\" option.
+		""").strip())
+
+	# print('-----------------------------')
+	# print(f'BASE MODEL DIR: {BASE_DIR}')
+	# print(f'MODEL DIR: {MODEL_DIR}')
+	# print('-----------------------------')
 
 	dataset_db = bcrmatch_parser.database
 
@@ -505,7 +521,8 @@ def main():
 		print("Finished training the models...")
 		sys.exit(0)
 
-
+	
+	# NOTE: Throw an error if TCRMATCH_PATH is not set or is empty
 	if not TCRMATCH_PATH or TCRMATCH_PATH.strip() == '':
 		raise EnvironmentError(textwrap.dedent("""
 			TCRMatch path is not set or is empty. Please set the TCRMATCH_PATH environment variable.
@@ -533,10 +550,13 @@ def main():
 	
 	classifiers = get_classifiers(dataset_name, dataset_ver, db=dataset_db)
 
+	print("Predicting...")
 	result_df = predict(score_dict, classifiers, scaler)
 
+	print("Adding mean percentile ranks...")
 	result_df = add_mean_percentile_ranks(result_df)
 
+	print("Outputting results...")
 	output_result(result_df, output_location, is_verbose=verbose)
 
 
