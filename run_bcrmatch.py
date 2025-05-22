@@ -7,6 +7,7 @@ import numpy as np
 import math
 import textwrap
 import logging
+from typing import Dict, List, Any, Union, Tuple
 from statsmodels.distributions.empirical_distribution import ECDF
 from bcrmatch_argparser import BCRMatchArgumentParser
 from bcrmatch import bcrmatch_functions, classify_abs
@@ -27,7 +28,7 @@ import tensorflow as tf
 tf.random.set_seed(42)
 
 
-def output_result(result_df, output_location, is_verbose):
+def output_result(result_df: pd.DataFrame, output_location: str, is_verbose: bool) -> None:
 	default_columns_to_display = [
 		'Antibody pair',
 		'LR Prediction',
@@ -56,7 +57,7 @@ def output_result(result_df, output_location, is_verbose):
 	result_df.to_csv(output_location, index=False)
 	print("Completed!")
 
-def add_mean_percentile_ranks(df):
+def add_mean_percentile_ranks(df: pd.DataFrame) -> pd.DataFrame:
 	headers = df.columns.tolist()
 	lr_gnb_mean_col_list = []
 	overall_mean_col_list = []
@@ -87,7 +88,7 @@ def add_mean_percentile_ranks(df):
 
 	return df
 
-def load_percentile_rank_dataset(classifier):
+def load_percentile_rank_dataset(classifier: str) -> np.ndarray:
 	# NOTE: 
 	# This is technically score distribution and not percentile rank.
 	# pkl_path = f'{BASE_DIR}/pickles/score_distributions/{classifier}.pkl'
@@ -99,7 +100,7 @@ def load_percentile_rank_dataset(classifier):
 	
 	return pr_dataset
 
-def calculate_percentile_rank(classifier, score):
+def calculate_percentile_rank(classifier: str, score: float) -> float:
 	'''
 	This function utilizes scipy to caculate percentile rank
 	of the predicted score from the 'percentile_rank_dataset.csv'.
@@ -111,7 +112,7 @@ def calculate_percentile_rank(classifier, score):
 	# NOTE: High score should equal lower ranks
 	return (1 - ecdf(score)) * 100
 
-def predict(complete_score_dict, classifiers, scaler):
+def predict(complete_score_dict: Dict[str, List[float]], classifiers: Dict[str, Any], scaler: Any) -> pd.DataFrame:
 	result = []
 
 	# Set column names
@@ -165,7 +166,7 @@ def predict(complete_score_dict, classifiers, scaler):
 
 	return pd.DataFrame(result, columns=result_header)
 
-def format_values(number):
+def format_values(number: Union[int, float]) -> Union[float, str]:
 	num = float(number)
 
 	if number == 0.0: return 0.0
@@ -177,7 +178,7 @@ def format_values(number):
 		# Calculate the number of significant digits after the decimal
 		return round(num, 2 - int(math.floor(math.log10(abs(num)))) - 1)
 
-def get_classifiers(dataset_name, version, db):
+def get_classifiers(dataset_name: str, version: int, db: str) -> Dict[str, Any]:
 	df = pd.read_csv(db, sep='\t')
 	
 	# NOTE: dataset_version column is saved as int type.
@@ -197,20 +198,19 @@ def get_classifiers(dataset_name, version, db):
 
 	return classifiers
 
-def get_models_dir_path(dataset, version):
-	# return '%s/%s/%s/%s' %(BASE_DIR, MODEL_DIR, dataset, version)
-	return f'{MODEL_DIR}/{dataset}/{version}'
+def get_models_dir_path(dataset: str, version: int) -> Path:
+	return MODEL_DIR / dataset / str(version)
 
-def save_scaler(dataset, version, scaler):
+def save_scaler(dataset: str, version: int, scaler: Any) -> None:
 	print("Pickling scaler object...")
 	base_path = get_models_dir_path(dataset, version)
-	pkl_file_path = f'{base_path}/scaler.pkl'
+	pkl_file_path = base_path / 'scaler.pkl'
 
 	with open(pkl_file_path, 'wb') as f:
 		pickle.dump(scaler, f)
 
 
-def save_classifiers(dataset, version, classifiers):
+def save_classifiers(dataset: str, version: int, classifiers: Dict[str, Any]) -> None:
 	# Saves classifers into pickle files
 	print("Pickling classifiers...")
 
@@ -221,14 +221,14 @@ def save_classifiers(dataset, version, classifiers):
 		path.mkdir(parents=True, exist_ok=True)
 
 		pkl_file_name = '%s_%s.pkl' %(classifier_name, dataset)
-		pkl_file_path = '%s/%s' %(base_path, pkl_file_name)
+		pkl_file_path = base_path / pkl_file_name
 		
 		print(pkl_file_path)
 		with open(pkl_file_path, 'wb') as f:
 			pickle.dump(classifier_obj, f)
 
 
-def train_classifiers(x_train, y_train):
+def train_classifiers(x_train: np.ndarray, y_train: np.ndarray) -> Dict[str, Any]:
 	# Trains data, then saves the model as pickle file.
 	rf = classify_abs.RF(x_train, y_train)
 	gnb = classify_abs.GNB(x_train, y_train)
@@ -247,14 +247,14 @@ def train_classifiers(x_train, y_train):
 	return classifiers
 
 
-def train_models(dataset_file):
+def train_models(dataset_file: str) -> Dict[str, Any]:
 	x_train, y_train = classify_abs.preprocess_ml_dataset(dataset_file)
 	
 	# Train classifiers
 	return train_classifiers(x_train, y_train)
 	
 
-def compile_scores(file_name):
+def compile_scores(file_name: str) -> Dict[str, str]:
 	score_dict = {}
 	IFH1 = open(file_name, "r")
 	lines1 = IFH1.readlines()
@@ -270,7 +270,7 @@ def compile_scores(file_name):
 	return (score_dict)
 
 
-def get_scoring_dict_from_csv(file_names):
+def get_scoring_dict_from_csv(file_names: List[str]) -> Dict[str, List[str]]:
 	"""
 	file_name: text file that contains all the input csv file names.
 		* dict_1 = compile_scores("test_cdrh3_iedb_seq_tcroutput.csv")
@@ -328,7 +328,7 @@ def get_scoring_dict_from_csv(file_names):
 	return all_score_dict
 
 
-def get_tcr_output_files(tsv_content) :
+def get_tcr_output_files(tsv_content: Dict[str, List[str]]) -> List[str]:
 	tcrout_filenames = []
 	sequence_name_key = list(tsv_content.keys())[0]
 	sequence_names = tsv_content[sequence_name_key]
@@ -366,7 +366,7 @@ def get_tcr_output_files(tsv_content) :
 	return tcrout_filenames
 
 
-def update_db_content(parser, name, dataset, version):
+def update_db_content(parser: BCRMatchArgumentParser, name: str, dataset: str, version: int) -> pd.DataFrame:
 	dataset_db_header = [
 		'dataset_name',
 		'model',
@@ -385,7 +385,7 @@ def update_db_content(parser, name, dataset, version):
 	return pd.DataFrame(data, columns=dataset_db_header)
 
 
-def start_training_mode(parser):
+def start_training_mode(parser: BCRMatchArgumentParser) -> None:
 	# For training mode, user must provide the following:
 	#   * training-dataset-csv
 	#   * training-dataset-name
@@ -439,7 +439,7 @@ def start_training_mode(parser):
 	save_scaler(training_dataset_name, training_dataset_version, scaler)
 
 
-def get_available_datasets(db):
+def get_available_datasets(db: str) -> pd.DataFrame:
 	df = pd.read_csv(db, sep='\t')
 
 	sub_df = df.groupby(['dataset_name', 'dataset_version'])
@@ -447,24 +447,21 @@ def get_available_datasets(db):
 	return pd.DataFrame(sub_df.size().reset_index(name='count')).drop(columns=['count'])
 
 
-def get_csv_file_path(dataset_name, version, db):
+def get_csv_file_path(dataset_name: str, version: int, db: str) -> str:
 	df = pd.read_csv(db, sep='\t')
 	filtered_df = df[(df['dataset_name']==dataset_name) & (df['dataset_version']==version)]	
 	
 	return filtered_df['dataset'].iloc[0]
 	
 
-def get_standard_scaler(dataset, version):
+def get_standard_scaler(dataset: str, version: int) -> Any:
 	# Create directories recursively
 	base_path = get_models_dir_path(dataset, version)
-	path = Path(base_path)
-	if not os.path.isdir(path):
+	
+	if not os.path.isdir(base_path):
 		raise NotADirectoryError(f'Directory Not Found: {base_path}')
-	path.mkdir(parents=True, exist_ok=True)
 
-	pkl_file_name = 'scaler.pkl'
-	pkl_file_path = '%s/%s' %(base_path, pkl_file_name)
-
+	pkl_file_path = base_path / 'scaler.pkl'
 	scaler = None
 	try:
 		with open(pkl_file_path, 'rb') as f:
@@ -475,8 +472,7 @@ def get_standard_scaler(dataset, version):
 	return scaler
 
 
-def main():
-	print("Starting program...")
+def main() -> None:
 	bcrmatch_parser = BCRMatchArgumentParser()
 	args, parser = bcrmatch_parser.parse_args(sys.argv[1:])
 
