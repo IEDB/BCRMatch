@@ -1,10 +1,10 @@
-FROM harbor.lji.org/iedb-public/tcrmatch:0.1.1
+FROM harbor.lji.org/iedb-public/tcrmatch:1.0.2
 
 # Prevent python from writing bytcode files to disk
-ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONDONTWRITEBYTECODE=1
 
 # Send stdout/stderr streams straight to termainl
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONUNBUFFERED=1
 
 # Set path to TCRMatch, which is required to run BCRMatch
 ENV TCRMATCH_PATH=/TCRMatch

@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import numpy as np
 import pandas as pd
 import xgboost
 import platform
@@ -10,6 +9,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB
+from sklearn.model_selection import train_test_split
 
 import os
 # Ignore tensorflow's CUDA warning messages
@@ -34,17 +34,17 @@ def preprocess_ml_dataset(dataset):
 	y = training_dataset.iloc[:, -1].values
 
 	#Splitting data into training and testing datasets
-	#from sklearn.model_selection import train_test_split
-	#X_train, X_test_1, y_train, y_test_1 = train_test_split(X, y, test_size = 0.25, random_state = 0, stratify = y )
-	
-	X[:, :] = sc.fit_transform(X[:, :])
+	X_train, X_test_1, y_train, y_test_1 = train_test_split(X, y, test_size = 0.25, random_state = 0, stratify = y )
+
+	# X[:, :] = sc.fit_transform(X[:, :])
+	X_train[:, :] = sc.fit_transform(X_train[:, :])
 	print('StandardScaler is being fitted by the dataset.')
-	return(X, y)
+	# return(X, y)
+	return(X_train, y_train)
 
 def preprocess_input_data(myList):
 	input_data = sc.transform(([myList]))
 	return(input_data)
-
 
 def preprocess_input_data(myList, scaler):
 	''' function overloading '''

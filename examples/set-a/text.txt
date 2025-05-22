@@ -1,0 +1,6 @@
+cdrh1_seqs.fasta
+cdrh2_seqs.fasta
+cdrh3_seqs.fasta
+cdrl1_seqs.fasta
+cdrl2_seqs.fasta
+cdrl3_seqs.fasta
