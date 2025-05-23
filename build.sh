@@ -15,14 +15,27 @@ mkdir -p $BUILD_DIR
 #TODO: add more exclusions here
 rsync --cvs-exclude --exclude build --exclude-from='do-not-distribute.txt' -a --delete $SRC_DIR/ $BUILD_DIR/
 
-# Use sed to replace the string with the environment variable
-# if [[ "$(uname)" == "Darwin" ]]; then
-#     # For MacOS
-#     sed -i "" "s/TOOL_VERSION/${TOOL_VERSION}/g" "$BUILD_DIR/README"
-# else
-#     # For Linux
-#     sed -i "s/TOOL_VERSION/${TOOL_VERSION}/g" "$BUILD_DIR/README"
-# fi
+# Replace version placeholder in README
+if [[ "$(uname)" == "Darwin" ]]; then
+    # For MacOS
+    sed -i "" "s/\${TOOL_VERSION}/${TOOL_VERSION}/g" "$BUILD_DIR/README"
+else
+    # For Linux
+    sed -i "s/\${TOOL_VERSION}/${TOOL_VERSION}/g" "$BUILD_DIR/README"
+fi
+
+# Generate underline based on title length
+TITLE="BCRMatch - version ${TOOL_VERSION}"
+UNDERLINE=$(printf '=%.0s' $(seq 1 ${#TITLE}))
+
+# Replace the underline in README
+if [[ "$(uname)" == "Darwin" ]]; then
+    # For MacOS
+    sed -i "" "s/^=.*$/${UNDERLINE}/" "$BUILD_DIR/README"
+else
+    # For Linux
+    sed -i "s/^=.*$/${UNDERLINE}/" "$BUILD_DIR/README"
+fi
 
 # remove all ._ files
 cd $BUILD_DIR
