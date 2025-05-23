@@ -21,7 +21,7 @@ docker run -it bcrmatch /bin/bash
 It is also possible to run a command without stepping inside the container. The following command will allow you to run the command and automatically clean up the container afterward.
 
 ```bash
-docker run --rm bcrmatch python3 run_bcrmatch.py -i examples/set-a/example.tsv -tn abpairs_abligity
+docker run --rm bcrmatch bash -c "python3 run_bcrmatch.py -i examples/set-a/example.tsv -tn abpairs_abligity"
 ```
 
 ### Mounting Volumes
@@ -59,6 +59,8 @@ docker run -it -v $(pwd):/src/bcrmatch bcrmatch /bin/bash
 Let say inside the BCRMatch container, the following command was run.
 
 ```bash
+docker run -it bcrmatch /bin/bash
+
 python run_bcrmatch.py -i ./examples/example.tsv -tn abpairs_abligity -o bcroutput.csv
 ```
 
