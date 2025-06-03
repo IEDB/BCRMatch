@@ -1,5 +1,8 @@
 # BCRMatch
 
+Version: ${TOOL_VERSION}
+===============
+
 BCRMatch is a tool that accepts sequences of CDR loops of antibodies, and uses the pre-trained machine learning models developed in this study to predict which antibodies recognize the same epitope.
 
 > **Note**: Please contact us at help@iedb.org if you wish to use antibody structure, in addition to sequence, for making predictions.
