@@ -12,7 +12,6 @@ build.md
 build/*
 build/
 do-not-distribute.txt
-README.md
 VERSION
 pickles/
 pickle_score_distributions.py

@@ -15,27 +15,27 @@ mkdir -p $BUILD_DIR
 #TODO: add more exclusions here
 rsync --cvs-exclude --exclude build --exclude-from='do-not-distribute.txt' -a --delete $SRC_DIR/ $BUILD_DIR/
 
-# Replace version placeholder in README
+# Replace the title in README.md with version
 if [[ "$(uname)" == "Darwin" ]]; then
     # For MacOS
-    sed -i "" "s/\${TOOL_VERSION}/${TOOL_VERSION}/g" "$BUILD_DIR/README"
+    sed -i "" "1s/^# BCRMatch$/# BCRMatch v${TOOL_VERSION}/" "$BUILD_DIR/README.md"
 else
     # For Linux
-    sed -i "s/\${TOOL_VERSION}/${TOOL_VERSION}/g" "$BUILD_DIR/README"
+    sed -i "1s/^# BCRMatch$/# BCRMatch v${TOOL_VERSION}/" "$BUILD_DIR/README.md"
 fi
 
 # Generate underline based on title length
-TITLE="BCRMatch - version ${TOOL_VERSION}"
-UNDERLINE=$(printf '=%.0s' $(seq 1 ${#TITLE}))
+# TITLE="BCRMatch - version ${TOOL_VERSION}"
+# UNDERLINE=$(printf '=%.0s' $(seq 1 ${#TITLE}))
 
-# Replace the underline in README
-if [[ "$(uname)" == "Darwin" ]]; then
-    # For MacOS
-    sed -i "" "s/^=.*$/${UNDERLINE}/" "$BUILD_DIR/README"
-else
-    # For Linux
-    sed -i "s/^=.*$/${UNDERLINE}/" "$BUILD_DIR/README"
-fi
+# # Replace the underline in README.md
+# if [[ "$(uname)" == "Darwin" ]]; then
+#     # For MacOS
+#     sed -i "" "s/^=.*$/${UNDERLINE}/" "$BUILD_DIR/README.md"
+# else
+#     # For Linux
+#     sed -i "s/^=.*$/${UNDERLINE}/" "$BUILD_DIR/README.md"
+# fi
 
 # remove all ._ files
 cd $BUILD_DIR
