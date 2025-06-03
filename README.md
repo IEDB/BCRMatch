@@ -129,13 +129,9 @@ docker tag harbor.lji.org/iedb-public/bcrmatch-anarci:latest bcrmatch-anarci
 2. Run a prediction with full-length sequences:
 ```bash
 docker run --rm \
--v $(pwd):/output \
-bcrmatch-anarci bash -c \
-"python run_bcrmatch.py \
--fh examples/set-c/updated_example_vh_seqs.fasta \
--fl examples/set-c/updated_example_vl_seqs.fasta \
--tn abpairs_abligity \
--o /output/output_file.csv"
+-v $(pwd):/src/bcrmatch \
+-e BCRMATCH_ARGS="-fh examples/set-c/updated_example_vh_seqs.fasta -fl examples/set-c/updated_example_vl_seqs.fasta -tn abpairs_abligity -o /output/output_file.csv" \
+bcrmatch-anarci
 ```
 
 ### Running Locally

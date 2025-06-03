@@ -37,6 +37,13 @@ fi
 #     sed -i "s/^=.*$/${UNDERLINE}/" "$BUILD_DIR/README.md"
 # fi
 
+# Set permissions
+# Set 644 for regular files
+find $BUILD_DIR -type f -not -name "*.sh" -exec chmod 644 {} \;
+
+# Set 755 for shell scripts
+find $BUILD_DIR -type f -name "*.sh" -exec chmod 755 {} \;
+
 # remove all ._ files
 cd $BUILD_DIR
 find . -type f -name '._*' -delete
