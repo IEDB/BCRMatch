@@ -8,21 +8,21 @@ TOOL_NAME=bcrmatch
 TOOL_VERSION="${TOOL_VERSION:-local}"
 # TOOL_DIR=$TOOL_NAME-$TOOL_VERSION
 SRC_DIR=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
-BUILD_DIR=$SRC_DIR/build/$TOOL_NAME
+BUILD_DIR=$SRC_DIR/build/$TOOL_NAME-$TOOL_VERSION
 
 mkdir -p $BUILD_DIR
 
 #TODO: add more exclusions here
 rsync --cvs-exclude --exclude build --exclude-from='do-not-distribute.txt' -a --delete $SRC_DIR/ $BUILD_DIR/
 
-# Replace the title in README.md with version
-if [[ "$(uname)" == "Darwin" ]]; then
-    # For MacOS
-    sed -i "" "1s/^# BCRMatch$/# BCRMatch v${TOOL_VERSION}/" "$BUILD_DIR/README.md"
-else
-    # For Linux
-    sed -i "1s/^# BCRMatch$/# BCRMatch v${TOOL_VERSION}/" "$BUILD_DIR/README.md"
-fi
+# # Replace the title in README.md with version
+# if [[ "$(uname)" == "Darwin" ]]; then
+#     # For MacOS
+#     sed -i "" "1s/^# BCRMatch$/# BCRMatch v${TOOL_VERSION}/" "$BUILD_DIR/README.md"
+# else
+#     # For Linux
+#     sed -i "1s/^# BCRMatch$/# BCRMatch v${TOOL_VERSION}/" "$BUILD_DIR/README.md"
+# fi
 
 # Generate underline based on title length
 # TITLE="BCRMatch - version ${TOOL_VERSION}"
@@ -50,4 +50,4 @@ find . -type f -name '._*' -delete
 
 cd $BUILD_DIR/..
 
-tar -czf IEDB_BCRMATCH-${TOOL_VERSION}.tar.gz $TOOL_NAME
+tar -czf IEDB_BCRMATCH-${TOOL_VERSION}.tar.gz $TOOL_NAME-$TOOL_VERSION
